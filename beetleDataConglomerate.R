@@ -115,11 +115,24 @@ beetDatDist <- beetDatDist %>% unite(col = trapPassID, c(BLID,station,pass),sep=
 
 beetDatTry1<- left_join(beetDatDist, wStnDat, by = 'trapPassID')
 
-#START HERE on Monday. Notes: some elytra lengths are in pixels, these will have to be fixed and cleaning code will have to be re-run. Good luck.
+#some elytra lengths are in pixels, these will have to be fixed.
+
+beetDatPixel<-filter(beetDatTry1, elytraLength>80) %>%
+  mutate(elytraLength=elytraLength/23.2333011)
+
+beetDatTry1<-filter(beetDatTry1, elytraLength<80) %>%
+  bind_rows(beetDatPixel)
+
 
 #Merges prey records and sample distances with GDD data
-beetDatDist <- beetDatDist %>% unite(col = stnDate, c(weatherStn,midDate),sep='-',remove = FALSE) #Creates a "station date" column called stnDate
+beetDat <- beetDatTry1 %>% unite(col = stnDate, c(weatherStn,midDate),sep='-',remove = FALSE) #Creates a "station date" column called stnDate
 ACISDat <- ACISDat %>% unite(col=stnDate, c(Station_Name,Date), sep = "-", remove = FALSE) #Creates a "station date" column called stnDate
 
 #Merges the tables together by "stnDate"
-beetDatDistGDD <- left_join(beetDatDist, ACISDat, by = 'stnDate')
+beetDat <- left_join(beetDat, ACISDat, by = 'stnDate')
+
+#Take out duplicate coloumns
+beetDat <- dplyr::select(beetDat, -Station_Name, -Date)
+
+#write the CSV
+write_csv(beetDat, "beetleData.csv")
