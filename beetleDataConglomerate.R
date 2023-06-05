@@ -1,13 +1,11 @@
 # TITLE: beetleDataConglomerate
 # Author: Tobyn Neame
 
-
+# Requires local data from Tobyn's laptop
 #SET UP ------------------------------------------------------------------------
 
 library(tidyverse)
 library(sf)
-library(gamlss)
-library(mgcv)
 
 theme_set(theme_bw())
 
@@ -134,6 +132,28 @@ beetDat <- left_join(beetDat, ACISDat, by = 'stnDate')
 
 #Take out duplicate coloumns
 beetDat <- dplyr::select(beetDat, -Station_Name, -Date)
+
+#some years are input wrong - Fix this
+beetDatYear<-filter(beetDat, year<2021) %>%
+  mutate(year=2022)
+
+beetDat<-bind_rows(filter(beetDat, year>2020), beetDatYear)
+
+beetDatYear<-filter(beetDat, year>2022) %>%
+  mutate(year=2022)
+
+beetDat<-bind_rows(filter(beetDat, year<2023), beetDatYear)
+
+#make NX give negative distances
+beetDat <- beetDat %>% 
+  mutate(dist = case_when(station == "N1" ~ -dist,
+                          station == "N2" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N4" ~ -dist,
+                          station == "N5" ~ -dist,
+                          station == "N6" ~ -dist,
+                          TRUE ~ dist))
 
 #write the CSV
 write_csv(beetDat, "beetleData.csv")
