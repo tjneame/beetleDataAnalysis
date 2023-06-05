@@ -47,8 +47,8 @@ beetDatMid %>%
   ggplot(aes(x=dist,y=elytraLength))+
   geom_point()
 
-#Size by distance showing season time 
+#Size by distance with jitter and alpha transparency
 beetDat %>%
   ggplot(aes(x=dist,y=elytraLength))+
-  geom_point(alpha=.2, position=position_jitter(width = 2))
+  geom_point(alpha=.1, position=position_jitter(width = 3))
 
