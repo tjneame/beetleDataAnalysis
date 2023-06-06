@@ -54,5 +54,7 @@ beetDatMid %>%
 #Size by distance with jitter and alpha transparency
 beetDat %>%
   ggplot(aes(x=dist,y=elytraLength))+
-  geom_point(alpha=.1, position=position_jitter(width = 3))
+  geom_point(alpha=.1, position=position_jitter(width = 3))+
+  xlab("Distance from NCV (m)") +
+  ylab("Length of beetle elytron (mm)")
 
