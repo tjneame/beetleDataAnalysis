@@ -8,13 +8,9 @@
 library(tidyverse)
 library(mgcv)
 library(gamlss)
-library(googlesheets4)
 
 #read in CSV
-#If working locally
-#beetDat<-read_csv("beetleData.csv")
-#If working remotely
-beetDat<- read_sheet("https://docs.google.com/spreadsheets/d/1JZwSNahFrIhxU3e5hNoBBQpLskxCO9A_Top1VlaJe0Y/edit#gid=140253595")
+beetDat<-read_csv("beetleData.csv")
 
 is_tibble(beetDat)
 
@@ -55,6 +51,8 @@ beetDatMid %>%
 beetDat %>%
   ggplot(aes(x=dist,y=elytraLength))+
   geom_point(alpha=.1, position=position_jitter(width = 3))+
-  xlab("Distance from NCV (m)") +
-  ylab("Length of beetle elytron (mm)")
+  xlab("Distance from NCV (m)")+
+  ylab("Length of elytron (mm)")+
+  geom_smooth(method="gam", formula=y~s(x,k=10,bs="ts"))
+
 
