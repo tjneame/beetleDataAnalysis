@@ -89,11 +89,34 @@ gam3<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_du
           data=beetDat, method="REML")
 beep(8)
 
+gam4<-gam(list(elytraLength~s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+         ~ s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+         ~ s(dist)+s(gdd)+ti(dist,GDD),
+         ~1),
+         family=shash,
+         data=beetDat, method="REML")
+beep(8)
+
+gam5<-gam(list(elytraLength~s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+         ~ s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+         ~ s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+         ~1),
+         family=shash,
+         data=beetDat, method="REML")
+beep(8)    
+    
+
 #Interpret the models ------------------------------------------------
 
 summary(gam2)
+summary(gam3)
+summary(gam4)
+summary(gam5)
 
 #Save the models -----------------------------------------------------
 
 write_rds(gam2,"elytraLength_GAMSHASH_2.rds")
+write_rds(gam3, "elytraLength_GAMSHASH_3.rds")
+write_rds(gam4, "elytraLength_GAMSHASH_4.rds")
+write_rds(gam5, "elytraLength_GAMSHASH_5.rds")
 
