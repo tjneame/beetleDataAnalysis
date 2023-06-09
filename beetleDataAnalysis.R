@@ -24,6 +24,9 @@ beetDat <- beetDat %>%
   mutate(BLID=as.factor(BLID)) %>%
   mutate(year=as.factor(year))
 
+#read in previously saved models (must have USB with the models and have models in the working directory)
+gam2<-read_rds("elytraLength_GAMSHASH_2.rds")
+
 #Look at data ------------------------------------------------------
 
 #Size by distance
@@ -84,7 +87,7 @@ gam3<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_du
                ~1),
           family=shash,
           data=beetDat, method="REML")
-beep(5)
+beep(8)
 
 #Interpret the models ------------------------------------------------
 
