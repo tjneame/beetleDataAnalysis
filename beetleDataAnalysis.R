@@ -52,7 +52,7 @@ beetDatMid %>%
   ggplot(aes(x=dist,y=elytraLength))+
   geom_point()
 
-#Size by distance with jitter and alpha transparency
+#Size by distance with jitter and alpha transparency and a simple GAM line
 beetDat %>%
   ggplot(aes(x=dist,y=elytraLength))+
   geom_point(alpha=.1, position=position_jitter(width = 3))+
@@ -63,8 +63,6 @@ beetDat %>%
 #Start some modeling ------------------------------------------------
 
 #Don't run gam1 unless you're on a super computer
-#Start some modeling ----------------------------------------------------------
-
 gam1<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -80,7 +78,19 @@ gam2<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BL
           data=beetDat, method="REML")
 beep(5)
 
-
+gam3<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+               ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+               ~1,
+               ~1),
+          family=shash,
+          data=beetDat, method="REML")
 beep(5)
 
+#Interpret the models ------------------------------------------------
+
+summary(gam2)
+
+#Save the models -----------------------------------------------------
+
+write_rds(gam2,"elytraLength_GAMSHASH_2.rds")
 
