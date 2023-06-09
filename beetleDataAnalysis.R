@@ -63,13 +63,14 @@ beetDat %>%
 #Start some modeling ------------------------------------------------
 
 #Don't run gam1 unless you're on a super computer
+#Start some modeling ----------------------------------------------------------
+
 gam1<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year),
           family=shash,
           data=beetDat, method="REML")
-
 
 gam2<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -79,5 +80,7 @@ gam2<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BL
           data=beetDat, method="REML")
 beep(5)
 
+
+beep(5)
 
 
