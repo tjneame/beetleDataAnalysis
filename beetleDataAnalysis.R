@@ -9,6 +9,7 @@ library(tidyverse)
 library(mgcv)
 library(gamlss)
 library(googlesheets4)
+library(beepr)
 
 #read in CSV
 #If working locally
@@ -58,5 +59,25 @@ beetDat %>%
   xlab("Distance from NCV (m)")+
   ylab("Length of elytron (mm)")+
   geom_smooth(method="gam", formula=y~s(x,k=10,bs="ts"))
+
+#Start some modeling ------------------------------------------------
+
+#Don't run gam1 unless you're on a super computer
+gam1<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+          ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+          ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+          ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year),
+          family=shash,
+          data=beetDat, method="REML")
+
+
+gam2<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+               ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+               ~1,
+               ~1),
+          family=shash,
+          data=beetDat, method="REML")
+beep(5)
+
 
 
