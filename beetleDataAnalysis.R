@@ -97,13 +97,13 @@ gam4<-gam(list(elytraLength~s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_du
          data=beetDat, method="REML")
 beep(8)
 
-gam5<-gam(list(elytraLength~s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-         ~ s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-         ~ s(dist)+s(gdd)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+gam5<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+         ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+         ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
          ~1),
          family=shash,
          data=beetDat, method="REML")
-beep(8)    
+beep(8)   
     
 
 #Interpret the models ------------------------------------------------
