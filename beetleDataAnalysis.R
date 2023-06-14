@@ -65,7 +65,7 @@ beetDat %>%
 
 #Start some modeling ------------------------------------------------
 
-#Don't run gam1 unless you're on a super computer
+#Couldn't run
 gam1<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -73,6 +73,7 @@ gam1<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BL
           family=shash,
           data=beetDat, method="REML")
 
+#Could run
 gam2<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~1,
@@ -81,30 +82,86 @@ gam2<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BL
           data=beetDat, method="REML")
 beep(5)
 
+#try making the data set smaller to see if the models run with that - HINT** They don't
+beetDatSmall <- beetDat %>%
+  sample_n(floor(nrow(beetDat)/20), replace=FALSE)
+
+#couldn't run
 gam3<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~1,
                ~1),
           family=shash,
-          data=beetDat, method="REML")
-beep(8)
+          data=beetDatSmall, method="REML")
 
+#couldn't run
 gam4<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-         ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-         ~ s(dist)+s(GDD)+ti(dist,GDD),
-         ~1),
-         family=shash,
-         data=beetDat, method="REML")
+               ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year),
+          family=gaulss,
+          data=beetDatSmall, method="REML")
+
 beep(8)
 
-gam5<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+#couldn't run
+gam5<-gam(list(elytraLength~s(dist, k=5, bs="ts")+
+                 s(GDD, k=5, bs="ts")+
+                 ti(dist,GDD, k=c(5,5))
+               +s(BLID,bs="re")+
+                 s(lon_dup,lat_dup,by=BLID, bs="ts")+
+                 year,
+         ~ s(dist, k=5, bs="ts")+
+           s(GDD, k=5, bs="ts")+
+           ti(dist,GDD, k=c(5,5))+ 
+           s(BLID,bs="re")+
+           s(lon_dup,lat_dup,by=BLID, bs="ts")+
+           year),
+         family=gaulss,
+         data=beetDatSmall, method="REML")
+beep(8)
+
+#Couldn't run
+gam6<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
          ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
          ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
          ~1),
          family=shash,
          data=beetDat, method="REML")
 beep(8)    
-    
+
+#couldn't run    
+gam7<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+               ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+               ~ s(dist)+s(GDD)+ti(dist,GDD),
+               ~1),
+          family=shash,
+          data=beetDat, method="REML")
+beep(8)
+
+#Start new modeling with advice from Paul ----------------------------
+## 1. Assume that skewness and kurtosis are not interesting (therefore use gaulss)
+## 2. Remove BLID as a random effect (it is clearly not important when the field-level smoothers are added)
+## 3. Instead of fitting a te(dist, GDD) try dist*GDD or as poly(dist, 4)*GDD 
+##    - TRY ON BOTH location and scale at same time
+
+gam8<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(lon_dup,lat_dup,by=BLID)+year,
+               ~s(dist)+s(GDD)+ti(dist,GDD)+s(lon_dup,lat_dup,by=BLID)+year),
+          family=gaulss,
+          data=beetDat, method="REML")
+
+gam9<-gam(list(elytraLength~te(dist,GDD)+s(lon_dup,lat_dup,by=BLID)+year,
+               ~te(dist,GDD)+s(lon_dup,lat_dup,by=BLID)+year),
+          family=gaulss,
+          data=beetDat, method="REML")
+
+gam10<-gam(list(elytraLength~dist*GDD+s(lon_dup,lat_dup,by=BLID)+year,
+               ~dist*GDD+s(lon_dup,lat_dup,by=BLID)+year),
+          family=gaulss,
+          data=beetDat, method="REML")
+
+gam11<-gam(list(elytraLength~poly(dist,4*GDD)+s(lon_dup,lat_dup,by=BLID)+year,
+               ~poly(dist,4)*GDD+s(lon_dup,lat_dup,by=BLID)+year),
+          family=gaulss,
+          data=beetDat, method="REML")
 
 #Interpret the models ------------------------------------------------
 
