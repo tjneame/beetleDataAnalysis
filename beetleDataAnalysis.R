@@ -169,14 +169,14 @@ gam11<-gam(list(elytraLength~poly(dist,4)*GDD+s(lon_dup,lat_dup,by=BLID)+year,
 #Interpret the models ------------------------------------------------
 
 summary(gam11)
-summary(gam3)
+summary(gam8)
 summary(gam4)
 summary(gam5)
 
 #Save the models -----------------------------------------------------
 
 write_rds(gam11,"elytraLength_GAMPoly_11.rds")
-write_rds(gam3, "elytraLength_GAMSHASH_3.rds")
+write_rds(gam8, "elytraLength_GAMGAULSS_8.rds")
 write_rds(gam4, "elytraLength_GAMSHASH_4.rds")
 write_rds(gam5, "elytraLength_GAMSHASH_5.rds")
 
