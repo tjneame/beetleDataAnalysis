@@ -3,6 +3,7 @@ library(tidyverse)
 library(mgcv)
 library(gratia)
 
+#ELYTRA LENGTH by distance and GDD
 #read in previously saved models
 m1<-read_rds("elytraLength_GAMSHASH_2.rds")
 m2<-read_rds("elytraLength_GAMSHASH_3.rds")
@@ -11,8 +12,7 @@ m4<-read_rds("elytraLength_GAMGAULSS_8.rds")
 m5<-read_rds("elytraLength_GAMPoly_11.rds")
 m6<-read_rds("elytraLength_GAMGAULSS_10.rds")
 
-## Plot the predictions from an MGCV SHASH or GAULSS model
-
+## Plot the predictions from MGCV GAM SHASH models
 ## m1-----------------------------------------------
 summary(m1)
 ## Capture the original data back from the model
@@ -142,7 +142,7 @@ ggplot(m2D) + geom_density2d_filled(aes(x=dist, y=elytraLength), bins=50) +
 appraise(m2) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
 
-# test predictions from GAULSS models------------------------------
+# plot predictions from MGCV GAM GAULSS models
 #m3 ---------------------------------------------------------------
 summary(m3)
 ## Capture the original data back from the model
