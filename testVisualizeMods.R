@@ -85,7 +85,7 @@ m2D <- m2$model %>%
 
 ## Points to predict from
 toPredict_m2D <- expand.grid(dist=seq(0, 200, by=1),
-                             GDD=c(200, 425, 600, 775),
+                             GDD=518,
                              year=2021,
                              lon_dup=613521.3,
                              lat_dup=5804287,
@@ -406,3 +406,6 @@ appraise(m6) #Probably not applicable because gratia may not know how to deal wi
 ##    - TRY ON BOTH location and scale at same time (DONE)
 ## 4. Fit with gaulss (DONE)
 ## 5. Quantile regression - QGAM (Simon Woods)
+## need to center the Lat Lon!!!!
+#Compare
+compare<-AIC(m1, m2, m3, m4, m5, m6)
