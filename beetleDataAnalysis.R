@@ -171,56 +171,66 @@ gam11<-gam(list(elytraLength~poly(dist,4*GDD)+s(lon_dup,lat_dup,by=BLID)+year,
           data=beetDatNoNA, method="REML")
 
 #New models with centered lat lon -------------------------------------
-gam12<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-               family=shash,
-               data=beetDat, method="REML"))
+form12<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year)
+gam12<-gam(form12,
+          family=shash,
+          data=beetDat,
+          method="REML")
 
-gam13<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                           ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                           ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                           ~1,
-                           family=shash,
-                           data=beetDat, method="REML"))
-gam14<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~1,
-                ~1,
-                family=shash,
-                data=beetDat, method="REML"))
+form13<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~1)
+gam13<-gam(form13,
+          family=shash,
+          data=beetDat, 
+          method="REML")
 
-gam15<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~1,
-                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~1,
+form14<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~1,
+             ~1)
+gam14<-gam(form14,
                 family=shash,
-                data=beetDat, method="REML"))
+                data=beetDat, method="REML")
 
-gam16<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
-                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
-                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
-                ~1,
+form15<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~1,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~1)
+gam15<-gam(form15,
                 family=shash,
-                data=beetDat, method="REML"))
+                data=beetDat, method="REML")
+
+form16<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
+             ~1)
+gam16<-gam(form16,
+                family=shash,
+                data=beetDat, method="REML")
 
 #poly requires no NA values
 beetDatNoNA<-beetDat%>%dplyr::filter(!is.na(dist))
 
-gam17<-gam(list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~1,
-                ~1,
+form17<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~1,
+             ~1)
+gam17<-gam(form17,
            family=shash,
-           data=beetDatNoNA, method="REML"))
+           data=beetDatNoNA, method="REML")
 
-gam18<-gam(list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-                ~1,
+form18<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~1)
+gam18<-gam(form18,
                 family=shash,
-                data=beetDatNoNA, method="REML"))
+                data=beetDatNoNA, method="REML")
 
 #Interpret the models ------------------------------------------------
 
