@@ -24,7 +24,10 @@ beetDat <- beetDat %>%
   mutate(BLID=as.factor(BLID)) %>%
   mutate(year=as.factor(year))
 
-
+#Center the lat-lon on their means 
+beetDat<-beetDat %>%
+  group_by(BLID) %>% mutate(cLon=mean(lon_dup),cLat=mean(lat_dup)) %>%
+  ungroup()%>% mutate(lon_dup=lon_dup-cLon,lat_dup=lat_dup-clat)
 
 #Look at data ------------------------------------------------------
 
