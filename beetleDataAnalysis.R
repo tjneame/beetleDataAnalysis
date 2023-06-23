@@ -4,9 +4,9 @@
 
 library(tidyverse)
 library(mgcv)
-library(gamlss)
 library(googlesheets4)
 library(beepr)
+library(qgam)
 
 #read in CSV
 #If working locally
