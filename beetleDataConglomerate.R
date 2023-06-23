@@ -157,3 +157,12 @@ beetDat <- beetDat %>%
 
 #write the CSV
 write_csv(beetDat, "beetleData.csv")
+
+#Make data set to use for abundance models
+beetDatAbund<-beetDat %>% 
+  add_count(trapPassID) %>% 
+  dplyr::select(-BBID,-elytraLength,-bodyLength,-order,-family,-genus,-species,-identifyer,-NOTES)%>%
+  distinct()%>%
+  rename(beetCount=n)
+
+write_csv(beetDatAbund,"beetleDataAbundance.csv")
