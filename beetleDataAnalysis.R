@@ -1,7 +1,4 @@
 #Title: beetleDataAnalysis
-#Author: Tobyn Neame
-
-#requires beetleData.csv
 
 #Set up -----------------------------------------------------------
 
@@ -28,6 +25,17 @@ beetDat <- beetDat %>%
 beetDat<-beetDat %>%
   group_by(BLID) %>% mutate(cLon=mean(lon_dup),cLat=mean(lat_dup)) %>%
   ungroup()%>% mutate(lon_dup=lon_dup-cLon,lat_dup=lat_dup-cLat)
+
+#make NX give negative values for dist
+beetDat <- beetDat %>% 
+  mutate(dist = case_when(station == "N1" ~ -dist,
+                          station == "N2" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N4" ~ -dist,
+                          station == "N5" ~ -dist,
+                          station == "N6" ~ -dist,
+                          TRUE ~ dist)) 
 
 #Look at data ------------------------------------------------------
 
@@ -65,7 +73,7 @@ beetDat %>%
   ylab("Length of elytron (mm)")+
   geom_smooth(method="gam", formula=y~s(x,k=10,bs="ts"))
 
-#Start some modeling ------------------------------------------------
+#Start some modeling for Elytra Length ------------------------------------------------
 
 #Couldn't run
 gam1<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -139,7 +147,7 @@ gam7<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_du
           data=beetDat, method="REML")
 beep(8)
 
-#Start new modeling with advice from Paul ----------------------------
+#Start new modeling with advice from Paul for Elytra Length ----------------------------
 ## 1. Assume that skewness and kurtosis are not interesting (therefore use gaulss)
 ## 2. Remove BLID as a random effect (it is clearly not important when the field-level smoothers are added)
 ## 3. Instead of fitting a te(dist, GDD) try dist*GDD or as poly(dist, 4)*GDD 
@@ -170,7 +178,9 @@ gam11<-gam(list(elytraLength~poly(dist,4*GDD)+s(lon_dup,lat_dup,by=BLID)+year,
           family=gaulss,
           data=beetDatNoNA, method="REML")
 
-#New models with centered lat lon -------------------------------------
+#PAUL Start Here: New models with centered lat lon for Elytra Length -------------------------------------
+
+#Tobyn started June 22
 form12<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
 ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
 ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
@@ -179,7 +189,9 @@ gam12<-gam(form12,
           family=shash,
           data=beetDat,
           method="REML")
+write_rds(gam12, "elytraLength_GAMSHASH_12.rds")
 
+#Tobyn started June 22
 form13<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
@@ -188,7 +200,9 @@ gam13<-gam(form13,
           family=shash,
           data=beetDat, 
           method="REML")
+write_rds(gam13, "elytraLength_GAMSHASH_13.rds")
 
+#Tobyn started June 22
 form14<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~1,
@@ -196,7 +210,9 @@ form14<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup
 gam14<-gam(form14,
                 family=shash,
                 data=beetDat, method="REML")
+write_rds(gam14, "elytraLength_GAMSHASH_14.rds")
 
+#Tobyn started June 22
 form15<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~1,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
@@ -204,7 +220,9 @@ form15<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup
 gam15<-gam(form15,
                 family=shash,
                 data=beetDat, method="REML")
+write_rds(gam15, "elytraLength_GAMSHASH_15.rds")
 
+#Tobyn started June 22
 form16<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
@@ -212,10 +230,12 @@ form16<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
 gam16<-gam(form16,
                 family=shash,
                 data=beetDat, method="REML")
+write_rds(gam16, "elytraLength_GAMSHASH_16.rds")
 
 #poly requires no NA values
 beetDatNoNA<-beetDat%>%dplyr::filter(!is.na(dist))
 
+#Tobyn started June 22
 form17<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~1,
@@ -223,7 +243,9 @@ form17<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by
 gam17<-gam(form17,
            family=shash,
            data=beetDatNoNA, method="REML")
+write_rds(gam17, "elytraLength_GAMPoly_17.rds")
 
+#Tobyn started June 22
 form18<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
              ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
@@ -231,18 +253,49 @@ form18<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by
 gam18<-gam(form18,
                 family=shash,
                 data=beetDatNoNA, method="REML")
+write_rds(gam18, "elytraLength_GAMPoly_18.rds")
 
-#Interpret the models ------------------------------------------------
+#QGAMs for Elytra Length ----------------------------------------
+#run the qform first, this allows each qGAM model to be identical.
+#Then run each qGAM plus the code to save it together.   
+qform<-as.formula(elytraLength~s(dist)+
+                    s(GDD)+
+                    ti(dist,GDD)+
+                    s(BLID,bs="re")+
+                    s(lon_dup,lat_dup,by=BLID)+
+                    year)
 
-summary(gam2)
-summary(gam3)
-summary(gam4)
-summary(gam5)
+qGAM1<-qgam(data=beetDat, qu=0.1, form=qform)
+write_rds(qGAM1, "elytraLength_QGAM_1.rds")
 
-#Save the models -----------------------------------------------------
+qGAM25<-qgam(data=beetDat, qu=0.25, form=qform)
+write_rds(qGAM25, "elytraLength_QGAM_25.rds")
 
-write_rds(gam2,"elytraLength_GAMGAULSS_9.rds")
-write_rds(gam3, "elytraLength_GAMSHASH_3.rds")
-write_rds(gam9, "elytraLength_GAMGAULSS_9.rds")
-write_rds(gam5, "elytraLength_GAMSHASH_5.rds")
+qGAM5<-qgam(data=beetDat, qu=0.5, form=qform)
+write_rds(qGAM5, "elytraLength_QGAM_5.rds")
 
+qGAM75<-qgam(data=beetDat, qu=0.75, form=qform)
+write_rds(qGAM75, "elytraLength_QGAM_75.rds")
+
+qGAM9<-qgam(data=beetDat, qu=0.9, form=qform)
+write_rds(qGAM9, "elytraLength_QGAM_9.rds")
+
+#Beetle abundance model ---------------------------------------------------- 
+#set up the dataset (should be ~900-915 obs of 19 variables)
+beetDatAbund<-beetDat %>% 
+  add_count(trapPassID) %>% 
+  dplyr::select(-BBID,-elytraLength,-bodyLength,-order,-family,-genus,-species,-identifyer,-NOTES)%>%
+  distinct()%>%
+  rename(beetCount=n)
+
+form <- as.formula(beetCount ~ s(dist) + #Distance from edge
+                     s(GDD) + #Growing degree day
+                     ti(dist,GDD) + #Distance:GDD interaction
+                     year + #Year 
+                     s(lon_dup,lat_dup,by=BLID) + #Within-field distances
+                     s(BLID,bs='re')) #Between-field distances (centroid of each field)   
+
+beetCountGAMNB_1 <- gam(formula = form,
+                        family = nb,
+                        data=beetDatAbund)
+write_rds(beetCountGAMNB_1, "beetCountGAMNB_1.rds")
