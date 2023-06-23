@@ -181,10 +181,10 @@ gam11<-gam(list(elytraLength~poly(dist,4*GDD)+s(lon_dup,lat_dup,by=BLID)+year,
 #PAUL Start Here: New models with centered lat lon for Elytra Length -------------------------------------
 
 #Tobyn started June 22
-form12<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year)
+form12<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year)
 gam12<-gam(form12,
           family=shash,
           data=beetDat,
@@ -192,9 +192,9 @@ gam12<-gam(form12,
 write_rds(gam12, "elytraLength_GAMSHASH_12.rds")
 
 #Tobyn started June 22
-form13<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+form13<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1)
 gam13<-gam(form13,
           family=shash,
@@ -203,8 +203,8 @@ gam13<-gam(form13,
 write_rds(gam13, "elytraLength_GAMSHASH_13.rds")
 
 #Tobyn started June 22
-form14<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+form14<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1,
              ~1)
 gam14<-gam(form14,
@@ -213,9 +213,9 @@ gam14<-gam(form14,
 write_rds(gam14, "elytraLength_GAMSHASH_14.rds")
 
 #Tobyn started June 22
-form15<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+form15<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1,
-             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+             ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1)
 gam15<-gam(form15,
                 family=shash,
@@ -236,8 +236,8 @@ write_rds(gam16, "elytraLength_GAMSHASH_16.rds")
 beetDatNoNA<-beetDat%>%dplyr::filter(!is.na(dist))
 
 #Tobyn started June 22
-form17<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-             ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+form17<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1,
              ~1)
 gam17<-gam(form17,
@@ -246,9 +246,9 @@ gam17<-gam(form17,
 write_rds(gam17, "elytraLength_GAMPoly_17.rds")
 
 #Tobyn started June 22
-form18<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-             ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
-             ~poly(dist,4*GDD)+s(BLID,bs="re")+te(lon_dup,lat_dup,by=BLID)+year,
+form18<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1)
 gam18<-gam(form18,
                 family=shash,
@@ -288,7 +288,7 @@ beetDatAbund<-beetDat %>%
   distinct()%>%
   rename(beetCount=n)
 
-form <- as.formula(beetCount ~ s(dist) + #Distance from edge
+formBC1 <- as.formula(beetCount ~ s(dist) + #Distance from edge
                      s(GDD) + #Growing degree day
                      ti(dist,GDD) + #Distance:GDD interaction
                      year + #Year 
