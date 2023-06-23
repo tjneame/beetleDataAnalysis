@@ -10,9 +10,9 @@ library(qgam)
 
 #read in CSV
 #If working locally
-#beetDat<-read_csv("beetleData.csv")
+beetDat<-read_csv("beetleData.csv")
 #If working remotely
-beetDat<-read_sheet("https://docs.google.com/spreadsheets/d/1JZwSNahFrIhxU3e5hNoBBQpLskxCO9A_Top1VlaJe0Y/edit#gid=140253595")
+#beetDat<-read_sheet("https://docs.google.com/spreadsheets/d/1JZwSNahFrIhxU3e5hNoBBQpLskxCO9A_Top1VlaJe0Y/edit#gid=140253595")
 
 is_tibble(beetDat)
 
