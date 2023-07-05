@@ -95,7 +95,7 @@ minDist <- apply(distMat,1,min) #Gets minimum distances from each row (each poin
 
 sampleLocs <- sampleLocs %>%  mutate(dist=minDist) #Joins minDist into sampleLocs dataframe
 
-#Merges sample distances with prey records
+#Merges sample distances with beetle records
 sampleLocs <- sampleLocs %>% unite(col = trapID, c(BLID,stationID),sep='-',remove = FALSE) #Creates a "Trap ID" column
 
 #Merges the tables together by "trapID" 
@@ -119,11 +119,13 @@ beetDatTry1<- left_join(beetDatDist, wStnDat, by = 'trapPassID')
 beetDatPixel<-filter(beetDatTry1, elytraLength>80) %>%
   mutate(elytraLength=elytraLength/23.2333011)
 
+beetDatENA<-subset(beetDatTry1,is.na(elytraLength)) #Only include for the abundance data
+
 beetDatTry1<-filter(beetDatTry1, elytraLength<80) %>%
-  bind_rows(beetDatPixel)
+  bind_rows(beetDatPixel) %>%
+  bind_rows(beetDatENA) #only included for the aubundance data
 
-
-#Merges prey records and sample distances with GDD data
+#Merges beetle records and sample distances with GDD data
 beetDat <- beetDatTry1 %>% unite(col = stnDate, c(weatherStn,midDate),sep='-',remove = FALSE) #Creates a "station date" column called stnDate
 ACISDat <- ACISDat %>% unite(col=stnDate, c(Station_Name,Date), sep = "-", remove = FALSE) #Creates a "station date" column called stnDate
 
@@ -144,25 +146,46 @@ beetDatYear<-filter(beetDat, year>2022) %>%
 
 beetDat<-bind_rows(filter(beetDat, year<2023), beetDatYear)
 
-#make NX give negative distances
-beetDat <- beetDat %>% 
-  mutate(dist = case_when(station == "N1" ~ -dist,
-                          station == "N2" ~ -dist,
-                          station == "N3" ~ -dist,
-                          station == "N3" ~ -dist,
-                          station == "N4" ~ -dist,
-                          station == "N5" ~ -dist,
-                          station == "N6" ~ -dist,
-                          TRUE ~ dist))
-
+setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis")
 #write the CSV
-write_csv(beetDat, "beetleData.csv")
+#write_csv(beetDat, "beetleData.csv")
 
 #Make data set to use for abundance models
 beetDatAbund<-beetDat %>% 
   add_count(trapPassID) %>% 
-  dplyr::select(-BBID,-elytraLength,-bodyLength,-order,-family,-genus,-species,-identifyer,-NOTES)%>%
+  dplyr::select(-BBID, -elytraLength,-bodyLength,-order,-family,-genus,-species,-identifyer,-NOTES)%>%
   distinct()%>%
   rename(beetCount=n)
+
+#add in zeros
+sampleLocs1 <- filter(sampleLocs, BLID<41077)
+sampleLocs1Expand <- sampleLocs1[rep(row.names(sampleLocs1), 3), 1:13]
+sampleLocs1Pass <- sampleLocs1Expand %>%
+  mutate(pass=rep(1:3, each=150)) %>%
+  unite(col = trapPassID, c(trapID,pass),sep='-',remove = TRUE)
+
+sampleLocs2 <- filter(sampleLocs, between(BLID, 41077, 41091))
+sampleLocs2Expand <- sampleLocs2[rep(row.names(sampleLocs2), 1), 1:13]
+sampleLocs2Pass <- sampleLocs2Expand %>%
+  mutate(pass=1) %>%
+  unite(col = trapPassID, c(trapID,pass),sep='-',remove = TRUE)
+
+sampleLocs3 <- filter(sampleLocs, BLID>41091)
+sampleLocs3Expand <- sampleLocs3[rep(row.names(sampleLocs3), 4), 1:13]
+sampleLocs3Pass <- sampleLocs3Expand %>%
+  mutate(pass=rep(1:4, each=105)) %>%
+  unite(col = trapPassID, c(trapID,pass),sep='-',remove = TRUE)
+
+##########################################/
+#START HERE TOMORROW-----------------------
+##########################################/
+
+#NOTES: 
+#1. Need to merge the sampleLocs back together
+#2. Need to add GDD to the sampleLocs
+#3. Need to merge only the trapPassIDs that don't already exist in the beetDatAbund
+#there will be lots of NAs in some columns so those will have to be rectified
+
+
 
 write_csv(beetDatAbund,"beetleDataAbundance.csv")

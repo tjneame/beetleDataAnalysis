@@ -8,6 +8,7 @@ library(googlesheets4)
 library(qgam)
 library(gratia)
 
+setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis")
 #read in CSV
 #If working locally
 beetDat<-read_csv("beetleData.csv")
@@ -159,7 +160,7 @@ beetDatAbund %>%
   geom_point(alpha=.1, position=position_jitter(width = 3))+
   xlab("Distance from NCV (m)")+
   ylab("Number of Carabids")+
-  geom_smooth(method="gam", formula=y~s(x,k=10,bs="ts"))
+  geom_smooth(method="gam", formula=y~s(x,k=3,bs="ts"))
 
 #Start some modeling for Elytra Length ------------------------------------------------
 
@@ -358,20 +359,20 @@ qformSmooth<-as.formula(elytraLength~s(dist)+
                     s(lon_dup,lat_dup,by=BLID)+
                     year)
 
-qGAM1Smooth<-qgam(data=beetDatCrop, qu=0.1, form=qform)
-write_rds(qGAM1, "elytraLength_QGAM_1.rds")
+qGAM1Smooth<-qgam(data=beetDatCrop, qu=0.1, form=qformSmooth)
+write_rds(qGAM1Smmoth, "elytraLength_QGAM_1.rds")
 
-qGAM25Smooth<-qgam(data=beetDatCrop, qu=0.25, form=qform)
-write_rds(qGAM25, "elytraLength_QGAM_25.rds")
+qGAM25Smooth<-qgam(data=beetDatCrop, qu=0.25, form=qformSmooth)
+write_rds(qGAM25Smooth, "elytraLength_QGAM_25.rds")
 
-qGAM5Smooth<-qgam(data=beetDatCrop, qu=0.5, form=qform)
-write_rds(qGAM5, "elytraLength_QGAM_5.rds")
+qGAM5Smooth<-qgam(data=beetDatCrop, qu=0.5, form=qformSmooth)
+write_rds(qGAM5Smooth, "elytraLength_QGAM_5.rds")
 
-qGAM75Smooth<-qgam(data=beetDatCrop, qu=0.75, form=qform)
-write_rds(qGAM75, "elytraLength_QGAM_75.rds")
+qGAM75Smooth<-qgam(data=beetDatCrop, qu=0.75, form=qformSmooth)
+write_rds(qGAM75Smooth, "elytraLength_QGAM_75.rds")
 
-qGAM9Smooth<-qgam(data=beetDatCrop, qu=0.9, form=qform)
-write_rds(qGAM9, "elytraLength_QGAM_9.rds")
+qGAM9Smooth<-qgam(data=beetDatCrop, qu=0.9, form=qformSmooth)
+write_rds(qGAM9Smooth, "elytraLength_QGAM_9.rds")
 
 #Paul made some more given that the QGAMs run pretty fast with a good computer. 
 #Below is what I assume the code could be for those
@@ -407,103 +408,45 @@ qGAM9Line<-qgam(data=beetDatCrop, qu=0.9, form=qformLine)
 #I am not sure how to specify the learning rate in QGAM
 
 #Elytra length in Crop vs non-crop------------------------------------------
-#Notes: With only two levels for the factor "station" a smooth cannot be fit to either the main or interaction terms containing it
-form20<-list(elytraLength~station+s(GDD)+(station*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~station+s(GDD)+(station*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~station+s(GDD)+(station*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~station+s(GDD)+(station*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year)
+#Notes: With only two levels for the factor "station" a smooth cannot be fit to 
+#either the main or interaction terms containing it. We could use elytraLength~station+(GDD, by=station)
+#however, this is okay because we are ignoring smooths on the mains and interaction for now
+
+form20<-list(elytraLength~station*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~station*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~1,
+             ~1)
 gam20<-gam(form20,
            family=shash,
            data=beetDatNC,
            method="REML")
 write_rds(gam20, "cropNonCrop_GAMSHASH_20.rds")
 
-
-form20<-list(elytraLength~s(station)+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~s(station)+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~s(station)+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~1)
-gam20<-gam(form20,
-           family=shash,
-           data=beetDatNC, 
-           method="REML")
-write_rds(gam20, "cropNonCrop_GAMSHASH_20.rds")
-
-
-form21<-list(elytraLength~s(station)+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~s(station)+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~1,
-             ~1)
-gam21<-gam(form21,
-           family=shash,
-           data=beetDatNC, method="REML")
-write_rds(gam21, "cropNonCrop_GAMSHASH_21.rds")
-
-
-form22<-list(elytraLength~s(station)+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~1,
-             ~s(station)+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~1)
-gam22<-gam(form22,
-           family=shash,
-           data=beetDatNC, method="REML")
-write_rds(gam22, "cropNonCrop_GAMSHASH_22.rds")
-
-
-form23<-list(elytraLength~station+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+year,
-             ~station+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+year,
-             ~station+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+year,
-             ~1)
-gam23<-gam(form23,
-           family=shash,
-           data=beetDatNC, method="REML")
-write_rds(gam23, "cropNonCrop_GAMSHASH_23.rds")
-
-#poly requires no NA values
-#beetDatNoNA<-beetDatCrop%>%dplyr::filter(!is.na(dist))
-form24<-list(elytraLength~poly(station,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~poly(station,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~1,
-             ~1)
-gam24<-gam(form24,
-           family=shash,
-           data=beetDatNC, method="REML")
-write_rds(gam24, "cropNonCrop_GAMPoly_24.rds")
-
-
-form25<-list(elytraLength~poly(station,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~poly(station,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~poly(station,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~1)
-gam25<-gam(form25,
-           family=shash,
-           data=beetDatNC, method="REML")
-write_rds(gam25, "cropNonCrop_GAMPoly_25.rds")
-
-#QGAMs for Elytra Length
+#QGAMs for Elytra Length in crop vs non-crop
 #run the qform first, this allows each qGAM model to be identical.
 #Then run each qGAM plus the code to save it together.   
-qform2<-as.formula(elytraLength~s(station)+
-                    s(GDD)+
-                    ti(station,GDD)+
-                    s(BLID,bs="re")+
-                    s(lon_dup,lat_dup,by=BLID)+
-                    year)
+qformLineNC<-as.formula(elytraLength~station*GDD+
+                        s(BLID,bs="re")+
+                        s(lon_dup,lat_dup,by=BLID)+
+                        year)
 
-qGAM1<-qgam(data=beetDatNC, qu=0.1, form=qform2)
-write_rds(qGAM1, "elytraLength_QGAM_1.rds")
+qGAM1LineNC<-qgam(data=beetDatNC, qu=0.1, form=qformLineNC)
 
-qGAM25<-qgam(data=beetDatNC, qu=0.25, form=qform2)
-write_rds(qGAM25, "elytraLength_QGAM_25.rds")
+qGAM2LineNC<-qgam(data=beetDatNC, qu=0.2, form=qformLineNC)
 
-qGAM5<-qgam(data=beetDatNC, qu=0.5, form=qform2)
-write_rds(qGAM5, "elytraLength_QGAM_5.rds")
+qGAM3LineNC<-qgam(data=beetDatNC, qu=0.3, form=qformLineNC)
 
-qGAM75<-qgam(data=beetDatNC, qu=0.75, form=qform2)
-write_rds(qGAM75, "elytraLength_QGAM_75.rds")
+qGAM4LineNC<-qgam(data=beetDatNC, qu=0.4, form=qformLineNC)
 
-qGAM9<-qgam(data=beetDatNC, qu=0.9, form=qform2)
-write_rds(qGAM9, "elytraLength_QGAM_9.rds")
+qGAM5LineNC<-qgam(data=beetDatNC, qu=0.5, form=qformLineNC)
+
+qGAM6LineNC<-qgam(data=beetDatNC, qu=0.6, form=qformLineNC)
+
+qGAM7LineNC<-qgam(data=beetDatNC, qu=0.7, form=qformLineNC)
+
+qGAM8LineNC<-qgam(data=beetDatNC, qu=0.8, form=qformLineNC)
+
+qGAM9LineNC<-qgam(data=beetDatNC, qu=0.9, form=qformLineNC)
 
 #Beetle abundance model ---------------------------------------------------- 
 
