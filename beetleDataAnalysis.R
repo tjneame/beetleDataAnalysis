@@ -5,7 +5,6 @@
 library(tidyverse)
 library(mgcv)
 library(googlesheets4)
-library(beepr)
 library(qgam)
 library(gratia)
 
@@ -60,7 +59,7 @@ beetDat<-beetDat %>%
   dplyr::select(-GDDSourceFlag) %>% #GDD source flag
   dplyr::select(-cLon,-cLat) #clon and clat
   
-#Abundance (dont use this yet, we need to add in the zeros maybe) 
+#Abundance (don't use this yet, we need to add in the zeros maybe) 
 #(should be ~900-915 obs of 19 variables)
 beetDatAbund<-beetDat %>% 
   add_count(trapPassID) %>% 
@@ -109,6 +108,10 @@ beetDatNC<-bind_rows(beetDatC,beetDatN) %>%
   mutate(station=as.factor(station))%>%
   drop_na()
 
+#try making the data set smaller to see if the models run with that - HINT** They don't
+beetDatSmall <- beetDat %>%
+  sample_n(floor(nrow(beetDat)/20), replace=FALSE)
+
 #Look at data ------------------------------------------------------
 
 #Size by distance
@@ -145,9 +148,22 @@ beetDat %>%
   ylab("Length of elytron (mm)")+
   geom_smooth(method="gam", formula=y~s(x,k=10,bs="ts"))
 
+#Size by crop vs non-crop
+beetDatNC %>%
+  ggplot(aes(x=station, y=elytraLength))+
+  geom_point(alpha=.1, position=position_jitter(width=.02))
+
+#abundance by distance
+beetDatAbund %>%
+  ggplot(aes(x=dist,y=beetCount))+
+  geom_point(alpha=.1, position=position_jitter(width = 3))+
+  xlab("Distance from NCV (m)")+
+  ylab("Number of Carabids")+
+  geom_smooth(method="gam", formula=y~s(x,k=10,bs="ts"))
+
 #Start some modeling for Elytra Length ------------------------------------------------
 
-#Couldn't run
+#Couldn't run, SHASH family with tensors (te) for dist and GDD. LSSK
 gam1<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
           ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -155,36 +171,30 @@ gam1<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BL
           family=shash,
           data=beetDat, method="REML")
 
-#Could run
+#Could run, SHASH family with tensors (te) for dist and GDD. LS
 gam2<-gam(list(elytraLength~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~te(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~1,
                ~1),
           family=shash,
           data=beetDat, method="REML")
-beep(5)
 
-#try making the data set smaller to see if the models run with that - HINT** They don't
-beetDatSmall <- beetDat %>%
-  sample_n(floor(nrow(beetDat)/20), replace=FALSE)
-
-#couldn't run
+#couldn't run, SHASH family with smoothers (s) for dist and GDD and a tensor for interaction. LS
 gam3<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~1,
                ~1),
           family=shash,
-          data=beetDatSmall, method="REML")
+          data=beetDat, method="REML")
 
-#couldn't run
+#couldn't run, GAULSS family with smoothers (s) for dist and GDD and a tensor for interaction
 gam4<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year),
           family=gaulss,
-          data=beetDatSmall, method="REML")
+          data=beetDat, method="REML")
 
-beep(8)
-
-#couldn't run
+#couldn't run, GAULSS family with smoothers (s) for dist and GDD and a tensor 
+#for interaction. Plus specified k and bs for the smooths to make run faster 
 gam5<-gam(list(elytraLength~s(dist, k=5, bs="ts")+
                  s(GDD, k=5, bs="ts")+
                  ti(dist,GDD, k=c(5,5))
@@ -199,32 +209,33 @@ gam5<-gam(list(elytraLength~s(dist, k=5, bs="ts")+
            year),
          family=gaulss,
          data=beetDatSmall, method="REML")
-beep(8)
 
-#Couldn't run
+#Couldn't run, SHASH family with smoothers (s) for dist and GDD and a tensor 
+#for interaction. LSS
 gam6<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
          ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
          ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
          ~1),
          family=shash,
          data=beetDat, method="REML")
-beep(8)    
 
-#couldn't run    
+#couldn't run, SHASH family with smoothers (s) for dist and GDD and a tensor 
+#for interaction. LS(S)
 gam7<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~ s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
                ~ s(dist)+s(GDD)+ti(dist,GDD),
                ~1),
           family=shash,
           data=beetDat, method="REML")
-beep(8)
 
 #Start new modeling with advice from Paul for Elytra Length ----------------------------
 ## 1. Assume that skewness and kurtosis are not interesting (therefore use gaulss)
 ## 2. Remove BLID as a random effect (it is clearly not important when the field-level smoothers are added)
+#^^^NOTE BLID is probably important but we were using the wrong data without centred lat lons
 ## 3. Instead of fitting a te(dist, GDD) try dist*GDD or as poly(dist, 4)*GDD 
 ##    - TRY ON BOTH location and scale at same time
 
+#The following 4 models don't include BLID and are GAULSS family.
 gam8<-gam(list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(lon_dup,lat_dup,by=BLID)+year,
                ~s(dist)+s(GDD)+ti(dist,GDD)+s(lon_dup,lat_dup,by=BLID)+year),
           family=gaulss,
@@ -240,19 +251,18 @@ gam10<-gam(list(elytraLength~dist*GDD+s(lon_dup,lat_dup,by=BLID)+year,
           family=gaulss,
           data=beetDat, method="REML")
 
-
-#Poly does not allow missing data
-
-beetDatNoNA<-beetDat%>%dplyr::filter(!is.na(dist))
+beetDatNoNA<-beetDat%>%dplyr::filter(!is.na(dist))#Poly does not allow missing data
 
 gam11<-gam(list(elytraLength~poly(dist,4*GDD)+s(lon_dup,lat_dup,by=BLID)+year,
                ~poly(dist,4)*GDD+s(lon_dup,lat_dup,by=BLID)+year),
           family=gaulss,
           data=beetDatNoNA, method="REML")
 
-#PAUL Start Here: New models with centered lat lon for Elytra Length -------------------------------------
+#New models for Elytra Length within the crop as a function of distance --------
+#this is where we centred the lat lon and made the data only within the crop
 
-#Tobyn started June 23
+#Tobyn started June 23, SHASH family with smoothers for dist and GDD (s) and 
+#tensor for interaction. LSSK
 form12<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
 ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
 ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -263,7 +273,8 @@ gam12<-gam(form12,
           method="REML")
 write_rds(gam12, "elytraLength_GAMSHASH_12.rds")
 
-#Tobyn started June 22
+#Tobyn started June 22, SHASH family with smoothers for dist and GDD (s) and 
+#tensor for interaction. LSS
 form13<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -274,7 +285,8 @@ gam13<-gam(form13,
           method="REML")
 write_rds(gam13, "elytraLength_GAMSHASH_13.rds")
 
-#Tobyn started June 22
+#Tobyn started June 22, SHASH family with smoothers for dist and GDD (s) and 
+#tensor for interaction. LS
 form14<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1,
@@ -284,7 +296,8 @@ gam14<-gam(form14,
                 data=beetDatCrop, method="REML")
 write_rds(gam14, "elytraLength_GAMSHASH_14.rds")
 
-#Tobyn started June 22
+#Tobyn started June 22, SHASH family with smoothers for dist and GDD (s) and 
+#tensor for interaction. L.S
 form15<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -294,7 +307,8 @@ gam15<-gam(form15,
                 data=beetDatCrop, method="REML")
 write_rds(gam15, "elytraLength_GAMSHASH_15.rds")
 
-#Tobyn started June 22
+#Tobyn started June 22, SHASH family with smoothers for dist and GDD (s) and 
+#tensor for interaction. LSS
 form16<-list(elytraLength~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
              ~s(dist)+s(GDD)+ti(dist,GDD)+s(BLID,bs="re")+year,
@@ -304,9 +318,7 @@ gam16<-gam(form16,
                 data=beetDatCrop, method="REML")
 write_rds(gam16, "elytraLength_GAMSHASH_16.rds")
 
-#poly requires no NA values
-#beetDatNoNA<-beetDatCrop%>%dplyr::filter(!is.na(dist))
-
+#SHASH family with polygons for dist and GDD (poly(d,4*G)). LS
 form17<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1,
@@ -316,7 +328,7 @@ gam17<-gam(form17,
            data=beetDatCrop, method="REML")
 write_rds(gam17, "elytraLength_GAMPoly_17.rds")
 
-
+#SHASH family with polygons for dist and GDD (poly(d,4*G)). LSS
 form18<-list(elytraLength~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~poly(dist,4*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -326,6 +338,7 @@ gam18<-gam(form18,
                 data=beetDatCrop, method="REML")
 write_rds(gam18, "elytraLength_GAMPoly_18.rds")
 
+#SHASH family with linear for dist and GDD. LS
 form19<-list(elytraLength~dist*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~dist*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1,
@@ -334,38 +347,71 @@ gam19<-gam(form19,
            family = shash,
            data=beetDatCrop, method="REML")
 write_rds(gam19,"elytraLength_GAMSHASH_19.rds")
-#QGAMs for Elytra Length ----------------------------------------
+
+#QGAMs for Elytra Length in crop as a function of distance -------------------
 #run the qform first, this allows each qGAM model to be identical.
-#Then run each qGAM plus the code to save it together.   
-qform<-as.formula(elytraLength~s(dist)+
+
+qformSmooth<-as.formula(elytraLength~s(dist)+
                     s(GDD)+
                     ti(dist,GDD)+
                     s(BLID,bs="re")+
                     s(lon_dup,lat_dup,by=BLID)+
                     year)
 
-qGAM1<-qgam(data=beetDatCrop, qu=0.1, form=qform)
+qGAM1Smooth<-qgam(data=beetDatCrop, qu=0.1, form=qform)
 write_rds(qGAM1, "elytraLength_QGAM_1.rds")
 
-qGAM25<-qgam(data=beetDatCrop, qu=0.25, form=qform)
+qGAM25Smooth<-qgam(data=beetDatCrop, qu=0.25, form=qform)
 write_rds(qGAM25, "elytraLength_QGAM_25.rds")
 
-qGAM5<-qgam(data=beetDatCrop, qu=0.5, form=qform)
+qGAM5Smooth<-qgam(data=beetDatCrop, qu=0.5, form=qform)
 write_rds(qGAM5, "elytraLength_QGAM_5.rds")
 
-qGAM75<-qgam(data=beetDatCrop, qu=0.75, form=qform)
+qGAM75Smooth<-qgam(data=beetDatCrop, qu=0.75, form=qform)
 write_rds(qGAM75, "elytraLength_QGAM_75.rds")
 
-qGAM9<-qgam(data=beetDatCrop, qu=0.9, form=qform)
+qGAM9Smooth<-qgam(data=beetDatCrop, qu=0.9, form=qform)
 write_rds(qGAM9, "elytraLength_QGAM_9.rds")
 
-#Below this isn't gonna work yet-------------------------------------------
-#Notes: With only two levels for the factor "station" a smooth cannot be fit to eitehr the main or interaction terms containing it
-#Elytra length in Crop vs non-crop
-form20<-list(elytraLength~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
-             ~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year)
+#Paul made some more given that the QGAMs run pretty fast with a good computer. 
+#Below is what I assume the code could be for those
+
+#QGAM, no smooths, these are probably the best ones.
+qformLine<-as.formula(elytraLength~dist*GDD+
+                    s(BLID,bs="re")+
+                    s(lon_dup,lat_dup,by=BLID)+
+                    year)
+
+qGAM1Line<-qgam(data=beetDatCrop, qu=0.1, form=qformLine)
+
+qGAM2Line<-qgam(data=beetDatCrop, qu=0.2, form=qformLine)
+
+qGAM25Line<-qgam(data=beetDatCrop, qu=0.25, form=qformLine)
+
+qGAM3Line<-qgam(data=beetDatCrop, qu=0.3, form=qformLine)
+
+qGAM4Line<-qgam(data=beetDatCrop, qu=0.4, form=qformLine)
+
+qGAM5Line<-qgam(data=beetDatCrop, qu=0.5, form=qformLine)
+
+qGAM6Line<-qgam(data=beetDatCrop, qu=0.6, form=qformLine)
+
+qGAM7Line<-qgam(data=beetDatCrop, qu=0.7, form=qformLine)
+
+qGAM75Line<-qgam(data=beetDatCrop, qu=0.75, form=qformLine)
+
+qGAM8Line<-qgam(data=beetDatCrop, qu=0.8, form=qformLine)
+
+qGAM9Line<-qgam(data=beetDatCrop, qu=0.9, form=qformLine)
+
+#I am not sure how to specify the learning rate in QGAM
+
+#Elytra length in Crop vs non-crop------------------------------------------
+#Notes: With only two levels for the factor "station" a smooth cannot be fit to either the main or interaction terms containing it
+form20<-list(elytraLength~station+s(GDD)+(station*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~station+s(GDD)+(station*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~station+s(GDD)+(station*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~station+s(GDD)+(station*GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year)
 gam20<-gam(form20,
            family=shash,
            data=beetDatNC,
