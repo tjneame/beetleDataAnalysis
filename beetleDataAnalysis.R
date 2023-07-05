@@ -326,6 +326,14 @@ gam18<-gam(form18,
                 data=beetDatCrop, method="REML")
 write_rds(gam18, "elytraLength_GAMPoly_18.rds")
 
+form19<-list(elytraLength~dist*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~dist*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+             ~1,
+             ~1)
+gam19<-gam(form19,
+           family = shash,
+           data=beetDatCrop, method="REML")
+write_rds(gam19,"elytraLength_GAMSHASH_19.rds")
 #QGAMs for Elytra Length ----------------------------------------
 #run the qform first, this allows each qGAM model to be identical.
 #Then run each qGAM plus the code to save it together.   
@@ -354,15 +362,15 @@ write_rds(qGAM9, "elytraLength_QGAM_9.rds")
 #Below this isn't gonna work yet-------------------------------------------
 #Notes: With only two levels for the factor "station" a smooth cannot be fit to eitehr the main or interaction terms containing it
 #Elytra length in Crop vs non-crop
-form19<-list(elytraLength~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
+form20<-list(elytraLength~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~station+s(GDD)+ti(station,GDD,k=3)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year)
-gam19<-gam(form19,
+gam20<-gam(form20,
            family=shash,
            data=beetDatNC,
            method="REML")
-write_rds(gam19, "cropNonCrop_GAMSHASH_19.rds")
+write_rds(gam20, "cropNonCrop_GAMSHASH_20.rds")
 
 
 form20<-list(elytraLength~s(station)+s(GDD)+ti(station,GDD)+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
