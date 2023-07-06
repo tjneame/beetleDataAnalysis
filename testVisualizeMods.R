@@ -69,11 +69,6 @@ ggplot(predicted_m1D) +
   facet_wrap(~as.factor(GDD))
 predicted_m1D
 
-#A better way to show raw data?
-ggplot(m1D) + geom_density2d_filled(aes(x=dist, y=elytraLength), bins=50) +
-  theme(legend.position="none") + 
-  geom_jitter(aes(x=dist, y=elytraLength), width=3, colour="white", alpha=0.05, size=0.1)
-
 #Test if model is good?
 appraise(m1) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
@@ -132,11 +127,6 @@ ggplot(predicted_m2D) +
               colour=NA, alpha=0.5) +
   facet_wrap(~as.factor(GDD))
 predicted_m2D
-
-#A better way to show raw data?
-ggplot(m2D) + geom_density2d_filled(aes(x=dist, y=elytraLength), bins=50) +
-  theme(legend.position="none") + 
-  geom_jitter(aes(x=dist, y=elytraLength), width=3, colour="white", alpha=0.05, size=0.1)
 
 #Test if model is good?
 appraise(m2) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
@@ -198,11 +188,6 @@ ggplot(predicted_m3D) +
   facet_wrap(~as.factor(GDD))
 predicted_m3D
 
-#A better way to show raw data?
-ggplot(m3D) + geom_density2d_filled(aes(x=dist, y=elytraLength), bins=50) +
-  theme(legend.position="none") + 
-  geom_jitter(aes(x=dist, y=elytraLength), width=3, colour="white", alpha=0.05, size=0.1)
-
 #Test if model is good?
 appraise(m3) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
@@ -262,11 +247,6 @@ ggplot(predicted_m4D) +
   facet_wrap(~as.factor(GDD))
 predicted_m4D
 
-#A better way to show raw data?
-ggplot(m4D) + geom_density2d_filled(aes(x=dist, y=elytraLength), bins=50) +
-  theme(legend.position="none") + 
-  geom_jitter(aes(x=dist, y=elytraLength), width=3, colour="white", alpha=0.05, size=0.1)
-
 #Test if model is good?
 appraise(m4) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
@@ -324,11 +304,6 @@ ggplot(predicted_m5D) +
               colour=NA, alpha=0.5) +
   facet_wrap(~as.factor(GDD))
 predicted_m5D
-
-#A better way to show raw data? DOESNT WORK BECAUSE OF THE POLYNOMIAL?
-ggplot(m5D) + geom_density2d_filled(aes(x=dist, y=elytraLength), bins=50) +
-  theme(legend.position="none") + 
-  geom_jitter(aes(x=dist, y=elytraLength), width=3, colour="white", alpha=0.05, size=0.1)
 
 #Test if model is good?
 appraise(m5) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
@@ -388,11 +363,6 @@ ggplot(predicted_m6D) +
               colour=NA, alpha=0.5) +
   facet_wrap(~as.factor(GDD))
 predicted_m6D
-
-#A better way to show raw data?
-ggplot(m6D) + geom_density2d_filled(aes(x=dist, y=elytraLength), bins=50) +
-  theme(legend.position="none") + 
-  geom_jitter(aes(x=dist, y=elytraLength), width=3, colour="white", alpha=0.05, size=0.1)
 
 #Test if model is good?
 appraise(m6) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?

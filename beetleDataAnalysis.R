@@ -12,9 +12,10 @@ setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis")
 #read in CSV
 #If working locally
 beetDat<-read_csv("beetleData.csv")
+beetDatAb<-read_csv("beetleDataAbundance.csv")
 #If working remotely
 #beetDat<-read_sheet("https://docs.google.com/spreadsheets/d/1JZwSNahFrIhxU3e5hNoBBQpLskxCO9A_Top1VlaJe0Y/edit#gid=140253595")
-
+#beetDatAb<-read_sheet("https://docs.google.com/spreadsheets/d/10-PmZo250m1IqwaqbrAOjKIBZQAassMdgP70SG5OVwI/edit?usp=sharing")
 is_tibble(beetDat)
 
 #make some columns into factors that have been erroneously read as integers and take out the extra BLID
@@ -23,10 +24,19 @@ beetDat <- beetDat %>%
   mutate(year=as.factor(year)) %>%
   filter(BLID!="51056") %>%
   droplevels()
-  
+
+beetDatAb <- beetDatAb %>%
+  mutate(BLID=as.factor(BLID)) %>%
+  mutate(year=as.factor(year)) %>%
+  filter(BLID!="51056") %>%
+  droplevels()  
 
 #Center the lat-lon on their means 
 beetDat<-beetDat %>%
+  group_by(BLID) %>% mutate(cLon=mean(lon_dup),cLat=mean(lat_dup)) %>%
+  ungroup()%>% mutate(lon_dup=lon_dup-cLon,lat_dup=lat_dup-cLat)
+
+beetDatAb<-beetDatAb %>%
   group_by(BLID) %>% mutate(cLon=mean(lon_dup),cLat=mean(lat_dup)) %>%
   ungroup()%>% mutate(lon_dup=lon_dup-cLon,lat_dup=lat_dup-cLat)
 
@@ -40,6 +50,17 @@ beetDat <- beetDat %>%
                           station == "N5" ~ -dist,
                           station == "N6" ~ -dist,
                           TRUE ~ dist)) 
+
+beetDatAb <- beetDatAb %>% 
+  mutate(dist = case_when(station == "N1" ~ -dist,
+                          station == "N2" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N4" ~ -dist,
+                          station == "N5" ~ -dist,
+                          station == "N6" ~ -dist,
+                          TRUE ~ dist)) 
+
 
 #make datasets for different analyses
 #first take out variables that wont ever be used (can be commented out so that they can be used if they need to be)
@@ -59,18 +80,22 @@ beetDat<-beetDat %>%
   dplyr::select(-midDate) %>% #midDate
   dplyr::select(-GDDSourceFlag) %>% #GDD source flag
   dplyr::select(-cLon,-cLat) #clon and clat
-  
-#Abundance (don't use this yet, we need to add in the zeros maybe) 
-#(should be ~900-915 obs of 19 variables)
-beetDatAbund<-beetDat %>% 
-  add_count(trapPassID) %>% 
-  dplyr::select(-elytraLength) %>%
-  distinct() %>%
-  rename(beetCount=n) %>%
-  drop_na()
+
+beetDatAb<-beetDatAb %>% 
+  dplyr::select(-cLon,-cLat) #clon and clat
 
 #crop only still with distance
 beetDatCrop<-beetDat %>%
+  filter(station != "N1",
+         station != "N2",
+         station != "N3",
+         station != "N3",
+         station != "N4",
+         station != "N5",
+         station != "N6") %>%
+  drop_na()
+
+beetDatAbCrop<-beetDatAb %>%
   filter(station != "N1",
          station != "N2",
          station != "N3",
@@ -108,6 +133,40 @@ beetDatNC<-bind_rows(beetDatC,beetDatN) %>%
   dplyr::select(-dist)%>%
   mutate(station=as.factor(station))%>%
   drop_na()
+
+rm(beetDatC)
+rm(beetDatN)
+
+beetDatAbN<-beetDatAb %>% 
+  filter(station != "C1",
+         station != "C2",
+         station != "C3",
+         station != "C3",
+         station != "C4",
+         station != "C5",
+         station != "C6",
+         station != "C7",
+         station != "C8",
+         station != "C9") %>%
+  mutate(station="nonCrop")
+
+beetDatAbC<-beetDatAb %>%
+  filter(station != "N1",
+         station != "N2",
+         station != "N3",
+         station != "N3",
+         station != "N4",
+         station != "N5",
+         station != "N6") %>%
+  mutate(station="Crop")
+
+beetDatAbNC<-bind_rows(beetDatAbC,beetDatAbN) %>%
+  dplyr::select(-dist)%>%
+  mutate(station=as.factor(station))%>%
+  drop_na()
+
+rm(beetDatAbC)
+rm(beetDatAbN)
 
 #try making the data set smaller to see if the models run with that - HINT** They don't
 beetDatSmall <- beetDat %>%
@@ -149,18 +208,26 @@ beetDat %>%
   ylab("Length of elytron (mm)")+
   geom_smooth(method="gam", formula=y~s(x,k=10,bs="ts"))
 
+ggplot(beetDat) + geom_density2d_filled(aes(x=dist, y=elytraLength), bins=50) +
+  theme(legend.position="none") + 
+  geom_jitter(aes(x=dist, y=elytraLength), width=3, colour="white", alpha=0.05, size=0.1)
+
 #Size by crop vs non-crop
 beetDatNC %>%
   ggplot(aes(x=station, y=elytraLength))+
   geom_point(alpha=.1, position=position_jitter(width=.02))
 
 #abundance by distance
-beetDatAbund %>%
+beetDatAb %>%
   ggplot(aes(x=dist,y=beetCount))+
   geom_point(alpha=.1, position=position_jitter(width = 3))+
   xlab("Distance from NCV (m)")+
   ylab("Number of Carabids")+
   geom_smooth(method="gam", formula=y~s(x,k=3,bs="ts"))
+
+ggplot(beetDatAb) + geom_density2d_filled(aes(x=dist, y=beetCount), bins=50) +
+  theme(legend.position="none") + 
+  geom_jitter(aes(x=dist, y=beetCount), width=3, colour="white", alpha=0.05, size=0.1)
 
 #Start some modeling for Elytra Length ------------------------------------------------
 
@@ -450,14 +517,26 @@ qGAM9LineNC<-qgam(data=beetDatNC, qu=0.9, form=qformLineNC)
 
 #Beetle abundance model ---------------------------------------------------- 
 
+#Smooth
 formBC1 <- as.formula(beetCount ~ s(dist) + #Distance from edge
                      s(GDD) + #Growing degree day
                      ti(dist,GDD) + #Distance:GDD interaction
                      year + #Year 
                      s(lon_dup,lat_dup,by=BLID) + #Within-field distances
-                     s(BLID,bs='re')) #Between-field distances (centroid of each field)   
-
-beetCountGAMNB_1 <- gam(formula = form,
+                     s(BLID,bs='re')) #Between-field
+#Linear
+formBC2 <- as.formula(beetCount ~ dist*GDD + #Distance:GDD interaction and main
+                        year + #Year 
+                        s(lon_dup,lat_dup,by=BLID) + #Within-field distances
+                        s(BLID,bs='re')) #Between-field 
+#Smooth
+beetCountGAMNB_1 <- gam(formula = formBC1,
                         family = nb,
-                        data=beetDatAbund)
+                        data=beetDatAbCrop)
 write_rds(beetCountGAMNB_1, "beetCountGAMNB_1.rds")
+
+#Linear
+beetCountGAMNB_2 <- gam(formula = formBC2,
+                        family = nb,
+                        data=beetDatAbCrop)
+write_rds(beetCountGAMNB_2, "beetCountGAMNB_2.rds")
