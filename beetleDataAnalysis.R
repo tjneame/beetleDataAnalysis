@@ -525,26 +525,37 @@ qGAM9LineNC<-qgam(data=beetDatNC, qu=0.9, form=qformLineNC)
 write_rds(qGAM9LineNC, "qGAM9LineNC.rds")
 #Beetle abundance models ---------------------------------------------------- 
 
-#Smooth
+#Smooth k=25
 formBC1 <- as.formula(beetCount ~ s(dist) + #Distance from edge
                      s(GDD) + #Growing degree day
                      ti(dist,GDD) + #Distance:GDD interaction
                      year + #Year 
-                     s(lon_dup,lat_dup,by=BLID) + #Within-field distances
+                     s(lon_dup,lat_dup,by=BLID, k=25) + #Within-field distances
                      s(BLID,bs='re')) #Between-field
-#Linear
+#Linear k=25
 formBC2 <- as.formula(beetCount ~ dist*GDD + #Distance:GDD interaction and main
                         year + #Year 
-                        s(lon_dup,lat_dup,by=BLID) + #Within-field distances
+                        s(lon_dup,lat_dup,by=BLID, k=25) + #Within-field distances
                         s(BLID,bs='re')) #Between-field 
+#Linear k=27
+formBC3 <- as.formula(beetCount ~ dist*GDD + #Distance:GDD interaction and main
+                        year + #Year 
+                        s(lon_dup,lat_dup,by=BLID, k=27) + #Within-field distances
+                        s(BLID,bs='re')) #Between-field
 #Smooth
 beetCountGAMNB_1 <- gam(formula = formBC1,
                         family = nb,
                         data=beetDatAbCrop)
 write_rds(beetCountGAMNB_1, "beetCountGAMNB_1.rds")
 
-#Linear
+#Linear k=25
 beetCountGAMNB_2 <- gam(formula = formBC2,
                         family = nb,
                         data=beetDatAbCrop)
 write_rds(beetCountGAMNB_2, "beetCountGAMNB_2.rds")
+
+#Linear k=27
+beetCountGAMNB_3 <- gam(formula = formBC3,
+                        family = nb,
+                        data=beetDatAbCrop)
+write_rds(beetCountGAMNB_3, "beetCountGAMNB_3.rds")
