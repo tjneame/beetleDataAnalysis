@@ -107,7 +107,7 @@ beetDatDist <- st_drop_geometry(sampleLocs) %>%
 
 #merges beetle data and sentinel prey to gain weather station and mid date columns
 wStnDat <- sentPrey %>% unite(col = trapPassID, c(BLID,site,return),sep='-',remove = FALSE) %>% #Creates a "trapPassID" column
-  dplyr::select(trapPassID,weatherStn,midDate) %>% #makes a wather station data set from sent prey
+  dplyr::select(trapPassID,weatherStn,midDate) %>% #makes a weather station data set from sent prey
   distinct(.keep_all = TRUE)
 
 beetDatDist <- beetDatDist %>% unite(col = trapPassID, c(BLID,station,pass),sep="-",remove = FALSE) #Creates a "trapPassID" column
@@ -123,7 +123,7 @@ beetDatENA<-subset(beetDatTry1,is.na(elytraLength)) #Only include for the abunda
 
 beetDatTry1<-filter(beetDatTry1, elytraLength<80) %>%
   bind_rows(beetDatPixel) %>%
-  bind_rows(beetDatENA) #only included for the aubundance data
+  bind_rows(beetDatENA) #only included for the abundance data
 
 #Merges beetle records and sample distances with GDD data
 beetDat <- beetDatTry1 %>% unite(col = stnDate, c(weatherStn,midDate),sep='-',remove = FALSE) #Creates a "station date" column called stnDate
@@ -132,7 +132,7 @@ ACISDat <- ACISDat %>% unite(col=stnDate, c(Station_Name,Date), sep = "-", remov
 #Merges the tables together by "stnDate"
 beetDat <- left_join(beetDat, ACISDat, by = 'stnDate')
 
-#Take out duplicate coloumns
+#Take out duplicate columns
 beetDat <- dplyr::select(beetDat, -Station_Name, -Date)
 
 #some years are input wrong - Fix this
@@ -162,30 +162,50 @@ sampleLocs1 <- filter(sampleLocs, BLID<41077)
 sampleLocs1Expand <- sampleLocs1[rep(row.names(sampleLocs1), 3), 1:13]
 sampleLocs1Pass <- sampleLocs1Expand %>%
   mutate(pass=rep(1:3, each=150)) %>%
-  unite(col = trapPassID, c(trapID,pass),sep='-',remove = TRUE)
+  unite(col = trapPassID, c(trapID,pass),sep='-',remove = FALSE)
 
 sampleLocs2 <- filter(sampleLocs, between(BLID, 41077, 41091))
 sampleLocs2Expand <- sampleLocs2[rep(row.names(sampleLocs2), 1), 1:13]
 sampleLocs2Pass <- sampleLocs2Expand %>%
   mutate(pass=1) %>%
-  unite(col = trapPassID, c(trapID,pass),sep='-',remove = TRUE)
+  unite(col = trapPassID, c(trapID,pass),sep='-',remove = FALSE)
 
 sampleLocs3 <- filter(sampleLocs, BLID>41091)
 sampleLocs3Expand <- sampleLocs3[rep(row.names(sampleLocs3), 4), 1:13]
 sampleLocs3Pass <- sampleLocs3Expand %>%
   mutate(pass=rep(1:4, each=105)) %>%
-  unite(col = trapPassID, c(trapID,pass),sep='-',remove = TRUE)
-
-##########################################/
-#START HERE TOMORROW-----------------------
-##########################################/
+  unite(col = trapPassID, c(trapID,pass),sep='-',remove = FALSE)
 
 #NOTES: 
-#1. Need to merge the sampleLocs back together
-#2. Need to add GDD to the sampleLocs
-#3. Need to merge only the trapPassIDs that don't already exist in the beetDatAbund
-#there will be lots of NAs in some columns so those will have to be rectified
+#Merge the sampleLocs back together
+sampleLocs<-bind_rows(sampleLocs1Pass, sampleLocs2Pass, sampleLocs3Pass)
+#Need to add GDD to the sampleLocs
+sampleLocs<- left_join(sampleLocs, wStnDat, by = 'trapPassID')
+sampleLocs <- sampleLocs %>% unite(col = stnDate, c(weatherStn,midDate),sep='-',remove = FALSE) #Creates a "station date" column called stnDate
+sampleLocs <- left_join(sampleLocs, ACISDat, by = 'stnDate') #Merges the tables together by "stnDate"
 
+#clean up the beetDatAbund and the sampleLocs to make them better for merging
+beetDatAbund<-beetDatAbund %>%
+  dplyr::select(trapPassID, beetCount, year, trapType)
+sampleLocs<-sampleLocs %>%
+  #mutate(station=stationID) %>%
+  dplyr::select(trapPassID, BLID, station, pass, lat_dup, lon_dup, dist, GDD)%>%
+  st_drop_geometry()
+
+#Need to merge only the trapPassIDs that don't already exist in the beetDatAbund
+beetDatAbund<-left_join(sampleLocs, beetDatAbund, by="trapPassID")
+
+#there will be lots of NAs in some columns so those will have to be rectified
+beetDatAbund<-beetDatAbund %>%
+  filter(trapType=="PF"|is.na(trapType)) %>%
+  distinct()
+
+beetDatAbund$trapType[is.na(beetDatAbund$trapType)] <- "PF"
+beetDatAbund$beetCount[is.na(beetDatAbund$beetCount)] <- 0
+
+beetDatAbund<-beetDatAbund %>%
+  mutate(year=case_when(BLID>41100~2022,
+                        BLID<41100~2021))
 
 
 write_csv(beetDatAbund,"beetleDataAbundance.csv")
