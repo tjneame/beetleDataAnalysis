@@ -477,7 +477,7 @@ qGAM9Line<-qgam(data=beetDatCrop, qu=0.9, form=qformLine)
 #Elytra length in Crop vs non-crop------------------------------------------
 #Notes: With only two levels for the factor "station" a smooth cannot be fit to 
 #either the main or interaction terms containing it. We could use elytraLength~station+(GDD, by=station)
-#however, this is okay because we are ignoring smooths on the mains and interaction for now
+#however, this is okay because the smooths are possibly obscuring the overall trend
 
 form20<-list(elytraLength~station*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~station*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
@@ -498,24 +498,32 @@ qformLineNC<-as.formula(elytraLength~station*GDD+
                         year)
 
 qGAM1LineNC<-qgam(data=beetDatNC, qu=0.1, form=qformLineNC)
+write_rds(qGAM1LineNC, "qGAM1LineNC.rds")
 
 qGAM2LineNC<-qgam(data=beetDatNC, qu=0.2, form=qformLineNC)
+write_rds(qGAM2LineNC, "qGAM2LineNC.rds")
 
 qGAM3LineNC<-qgam(data=beetDatNC, qu=0.3, form=qformLineNC)
+write_rds(qGAM3LineNC, "qGAM3LineNC.rds")
 
 qGAM4LineNC<-qgam(data=beetDatNC, qu=0.4, form=qformLineNC)
+write_rds(qGAM4LineNC, "qGAM4LineNC.rds")
 
 qGAM5LineNC<-qgam(data=beetDatNC, qu=0.5, form=qformLineNC)
+write_rds(qGAM5LineNC, "qGAM5LineNC.rds")
 
 qGAM6LineNC<-qgam(data=beetDatNC, qu=0.6, form=qformLineNC)
+write_rds(qGAM6LineNC, "qGAM6LineNC.rds")
 
 qGAM7LineNC<-qgam(data=beetDatNC, qu=0.7, form=qformLineNC)
+write_rds(qGAM7LineNC, "qGAM7LineNC.rds")
 
 qGAM8LineNC<-qgam(data=beetDatNC, qu=0.8, form=qformLineNC)
+write_rds(qGAM8LineNC, "qGAM8LineNC.rds")
 
 qGAM9LineNC<-qgam(data=beetDatNC, qu=0.9, form=qformLineNC)
-
-#Beetle abundance model ---------------------------------------------------- 
+write_rds(qGAM9LineNC, "qGAM9LineNC.rds")
+#Beetle abundance models ---------------------------------------------------- 
 
 #Smooth
 formBC1 <- as.formula(beetCount ~ s(dist) + #Distance from edge
