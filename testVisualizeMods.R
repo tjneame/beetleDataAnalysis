@@ -737,12 +737,15 @@ predicted_m13D
 #Visualisation of Abundance GAMS--------------------------------------
 #read in the models
 setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis/abundance")
-m1<-read_rds("beetCountGAMNB_1.rds")
-m2<-read_rds("beetCountGAMNB_2.rds")
-m3<-read_rds("beetCountGAMNB_3.rds")
+m1<-read_rds("beetCountGAMNB_1.rds") #smooth
+m2<-read_rds("beetCountGAMNB_2.rds") #linear
+m3<-read_rds("beetCountGAMNB_3.rds") #linear
+m4<-read_rds("beetCountGAMNB_4.rds") #crop v non-crop
+m5<-read_rds("beetCountGAMNB_5.rds") #crop v non-crop
 
 #decide which model to use
 AIC(m1, m2, m3)
+AIC(m4, m5)
 
 #visualize using Sam's code - number of beetles over distance
 newdat <- expand.grid(dist=seq(0,200,by=5),GDD=c(300,500,700),inCrop=TRUE,
@@ -778,7 +781,7 @@ cols <- c('blue','purple','red')
 )
 
 #visualize number of beetles over time
-newdat2 <- expand.grid(GDD=seq(0,900,by=10),dist=c(5,100,200),
+newdat2 <- expand.grid(GDD=seq(0,900,by=5),dist=c(5,100,200),
                       year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
 newdat2 <- predict.gam(m1,newdata=newdat2,se.fit = TRUE,
                       exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
@@ -809,3 +812,22 @@ cols <- c('blue','purple','red')
     theme(legend.position = c(0.5,0.85),legend.background = element_rect(colour='grey'))
 )
 
+#Abundance between crop and non-crop
+newdat3 <- expand.grid(station=c("Crop", "nonCrop"),GDD=c(300,500,700),
+                      year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
+newdat3 <- predict.gam(m5,newdata=newdat3,se.fit = TRUE,
+                      exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbNC$BLID)))) %>% 
+  do.call('data.frame',.) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(across(c(fit,upr,lwr),exp)) %>% 
+  bind_cols(dplyr::select(newdat3,station,GDD),.)
+
+(p <- newdat3 %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
+    ggplot()+geom_errorbar(aes(x=station,ymax=upr,ymin=lwr),alpha=0.2)+
+    geom_point(aes(x=station,y=fit))+
+    #geom_text(data=dplyr::select(beetDatAbNC,station),aes(x=station,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    facet_wrap(~GDD)+
+    labs(x='crop vs non-crop',y='Number of carabids')+
+    #xlim()+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)
+)
