@@ -734,7 +734,78 @@ ggplot(predicted_m13D) +
 predicted_m13D
 
 
+#Visualisation of Abundance GAMS--------------------------------------
+#read in the models
+setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis/abundance")
+m1<-read_rds("beetCountGAMNB_1.rds")
+m2<-read_rds("beetCountGAMNB_2.rds")
+m3<-read_rds("beetCountGAMNB_3.rds")
 
+#decide which model to use
+AIC(m1, m2, m3)
 
-#Compare----------------------------------------------------------------------
-compare<-AIC(m1, m2, m3, m4, m5, m6)
+#visualize using Sam's code - number of beetles over distance
+newdat <- expand.grid(dist=seq(0,200,by=5),GDD=c(300,500,700),inCrop=TRUE,
+                      year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
+newdat <- predict.gam(m1,newdata=newdat,se.fit = TRUE,
+                      exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
+  do.call('data.frame',.) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(across(c(fit,upr,lwr),exp)) %>% 
+  bind_cols(dplyr::select(newdat,dist,GDD),.)
+
+cols <- c('blue','purple','red')
+
+(p <- newdat %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
+    ggplot(aes(x=dist))+geom_ribbon(aes(ymax=upr,ymin=lwr,fill=GDD),alpha=0.2)+
+    geom_line(aes(y=fit,col=GDD))+
+    geom_text(data=beetDatAbCrop,aes(x=dist,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    labs(x='Distance from field edge',y='Number of carabids')+
+    xlim(0,200)+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme(legend.position = c(0.85,0.85),legend.background = element_rect(colour='grey'))
+)
+
+(p <- newdat %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
+    ggplot()+geom_ribbon(aes(x=dist,ymax=upr,ymin=lwr),alpha=0.2)+
+    geom_line(aes(x=dist,y=fit))+
+    geom_text(data=dplyr::select(beetDatAbCrop,dist),aes(x=dist,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    facet_wrap(~GDD)+
+    labs(x='Distance from field edge',y='Number of carabids')+
+    xlim(0,200)+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))
+)
+
+#visualize number of beetles over time
+newdat2 <- expand.grid(GDD=seq(0,900,by=10),dist=c(5,100,200),
+                      year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
+newdat2 <- predict.gam(m1,newdata=newdat2,se.fit = TRUE,
+                      exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
+  do.call('data.frame',.) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(across(c(fit,upr,lwr),exp)) %>% 
+  bind_cols(dplyr::select(newdat2,GDD,dist),.)
+
+cols <- c('blue','purple','red')
+
+(p <- newdat2 %>% mutate(dist=factor(dist,labels = c('Near (5)','Mid (100)','Far (200)'))) %>% 
+    ggplot()+geom_ribbon(aes(x=GDD,ymax=upr,ymin=lwr),alpha=0.2)+
+    geom_line(aes(x=GDD,y=fit))+
+    geom_text(data=dplyr::select(beetDatAbCrop,GDD),aes(x=GDD,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    facet_wrap(~dist)+
+    labs(x='time in GDD',y='Number of carabids')+
+    xlim(125,900)+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))
+)
+(p <- newdat2 %>% mutate(dist=factor(dist,labels = c('Near (5)','Mid (100)','Far (200)'))) %>% 
+    ggplot(aes(x=GDD))+geom_ribbon(aes(ymax=upr,ymin=lwr,fill=dist),alpha=0.2)+
+    geom_line(aes(y=fit,col=dist))+
+    geom_text(data=beetDatAbCrop,aes(x=GDD,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    labs(x='time in GDD',y='Number of carabids')+
+    xlim(125,900)+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme(legend.position = c(0.5,0.85),legend.background = element_rect(colour='grey'))
+)
+
