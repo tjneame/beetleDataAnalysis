@@ -28,8 +28,9 @@ beetDat <- beetDat %>%
 beetDatAb <- beetDatAb %>%
   mutate(BLID=as.factor(BLID)) %>%
   mutate(year=as.factor(year)) %>%
+  mutate(station=as.factor(station)) %>%
   filter(BLID!="51056") %>%
-  droplevels()  
+  droplevels() 
 
 #Center the lat-lon on their means 
 beetDat<-beetDat %>%
@@ -523,7 +524,7 @@ write_rds(qGAM8LineNC, "qGAM8LineNC.rds")
 
 qGAM9LineNC<-qgam(data=beetDatNC, qu=0.9, form=qformLineNC)
 write_rds(qGAM9LineNC, "qGAM9LineNC.rds")
-#Beetle abundance models ---------------------------------------------------- 
+#Beetle abundance by distance within the crop models ---------------------------------------------------- 
 
 #Smooth k=25
 formBC1 <- as.formula(beetCount ~ s(dist) + #Distance from edge
@@ -559,3 +560,28 @@ beetCountGAMNB_3 <- gam(formula = formBC3,
                         family = nb,
                         data=beetDatAbCrop)
 write_rds(beetCountGAMNB_3, "beetCountGAMNB_3.rds")
+
+#Beetle abundance by crop vs non-crop models --------------------------
+
+#Linear k=25
+formBC4 <- as.formula(beetCount ~ station*GDD + #Distance:GDD interaction and main
+                        year + #Year 
+                        s(lon_dup,lat_dup,by=BLID, k=25) + #Within-field distances
+                        s(BLID,bs='re')) #Between-field 
+#Linear k=45
+formBC5 <- as.formula(beetCount ~ station*GDD + #Distance:GDD interaction and main
+                        year + #Year 
+                        s(lon_dup,lat_dup,by=BLID, k=45) + #Within-field distances
+                        s(BLID,bs='re')) #Between-field
+
+#Linear k=25
+beetCountGAMNB_4 <- gam(formula = formBC4,
+                        family = nb,
+                        data=beetDatAbNC)
+write_rds(beetCountGAMNB_4, "beetCountGAMNB_4.rds")
+
+#Linear k=45
+beetCountGAMNB_5 <- gam(formula = formBC5,
+                        family = nb,
+                        data=beetDatAbNC)
+write_rds(beetCountGAMNB_5, "beetCountGAMNB_5.rds")
