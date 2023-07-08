@@ -72,7 +72,7 @@ predicted_m1D
 #Test if model is good?
 appraise(m1) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
-#Outdated: m2--------------------------------------------------------
+#m2
 summary(m2)
 ## Capture the original data back from the model
 m2D <- m2$model %>%
@@ -133,7 +133,7 @@ appraise(m2) #Probably not applicable because gratia may not know how to deal wi
 
 
 # plot predictions from MGCV GAM GAULSS models
-#Outdated: m3 ---------------------------------------------------------------
+#Outdated: m3 
 summary(m3)
 ## Capture the original data back from the model
 m3D <- m3$model %>%
@@ -192,8 +192,7 @@ predicted_m3D
 appraise(m3) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
 
-#Outdated: m4 ------------------------------------------------------------
-summary(m4)
+#Outdated: m4 
 ## Capture the original data back from the model
 m4D <- m4$model %>%
   as_tibble()
@@ -250,8 +249,7 @@ predicted_m4D
 #Test if model is good?
 appraise(m4) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
-#Outdated: m5 -------------------------------------------------------------------------
-summary(m5)
+#Outdated: m5
 ## Capture the original data back from the model
 m5D <- m5$model %>%
   as_tibble()
@@ -309,7 +307,7 @@ predicted_m5D
 appraise(m5) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
 
-#Outdated: m6 ------------------------------------------------------------
+#Outdated: m6 
 summary(m6)
 ## Capture the original data back from the model
 m6D <- m6$model %>%
@@ -367,16 +365,6 @@ predicted_m6D
 #Test if model is good?
 appraise(m6) #Probably not applicable because gratia may not know how to deal with SHASH distributions? See note below about QGAM?
 
-
-#Notes ----------------------------------------------------------------------
-## Here are some ideas for making models run faster
-## 1. Assume that skewness and kurtosis are not interesting (therefore use gaulss)(DONE)
-## 2. Remove BLID as a random effect (it is clearly not important when the field-level smoothers are added) (DONE)
-## 3. Instead of fitting a te(dist, GDD) try dist*GDD or as poly(dist, 4)*GDD 
-##    - TRY ON BOTH location and scale at same time (DONE)
-## 4. Fit with gaulss (DONE)
-## 5. Quantile regression - QGAM (Simon Woods)
-## need to center the Lat Lon!!!!
 
 ## QGAMS Supplementary code from Paul -----------------------------------------
 
@@ -573,101 +561,6 @@ ggplot(prDSmooth) +
 
 
 
-#Try with learning rate smooth qgams -----------------------------------------
-
-## LOAD THE QGAM RDS OBJECTS
-## PLACE THEM IN A LIST OBJECT
-LRObjectsToLoad<- c("elytraLength_QGAM_1_LR.rds","elytraLength_QGAM_25_LR.rds","elytraLength_QGAM_5_LR.rds","elytraLength_QGAM_75_LR.rds","elytraLength_QGAM_9_LR.rds")
-allModelsLR <- map(LRObjectsToLoad, read_rds)
-names(allModelsLR) <- LRObjectsToLoad
-
-## Look at only of the smooths
-## from the fifth model (i.e. median)
-## This one shows the map of BLID 41007
-draw(smooth_estimates(allModelsLR[[5]], "s(lon_dup,lat_dup):BLID41007"))
-## The pattern is:
-## draw(smooth_estimates(MODEL_GOES_HERE, "the exact smooth name as it appears in summary"))
-
-#Plotting the quantile smooths for distance
-
-## GRAB THE DATA THAT WAS USED TO CREATE THE MODEL FROM
-## THE FIRST QGAM OBJECT
-inDLR <- allModelsLR[[1]]$model
-
-## SPECIFY THE QUANTILES OF GDD THAT YOU WANT TO PREDICT FOR
-## (0.43 is the mean in this dataset)
-quantilesGDD <- c(0.1, 0.43, 0.9)
-
-## SPECIFY THE DATA ON WHICH TO PREDICT THE SMOOTHS
-## These three levels of GDD are roughly the mean, and the
-## 25% and 75% quantiles of the GDD distribution.
-## (In other words: early season, mid-season and late-season)
-## If you change them you need to make sure the numbers
-## are consistent further down.
-pr_inD <- expand.grid(
-  dist = seq(0, 300),
-  GDD=c(200,400, 750)) %>%
-  bind_cols(
-    tibble(BLID="41014",
-           lon_dup=0,
-           lat_dup=0,
-           year="2022")) %>%
-  as_tibble()
-
-## PREDICT THE SMOOTHS
-## Note how exclude contains the same BLID interaction
-## as the the BLID that was used when predicting.
-## This is important!
-prDLR <- tibble(quantile=map(allModelsLR, function(x) 
-  x$family$getQu()) %>% 
-    as.numeric(),
-  y_hat=map(allModelsLR, function(x) 
-    predict(x, 
-            newdata = pr_inD, 
-            exclude=c("s(BLID)", "s(lon_dup,lat_dup):BLID41014"),
-            type="response", se.fit=TRUE) %>%
-      bind_cols() %>%
-      bind_cols(pr_inD))) %>%
-  unnest(y_hat)
-
-## Draw the quantiles at the chosen levels of GDD
-ggplot(prDLR) +
-  geom_line(aes(x=dist, y=fit, colour=quantile, group=quantile)) + 
-  facet_wrap(~as.factor(GDD)) 
-
-
-## Prepare the raw data for plotting using three GDD panels
-## identifying which data point is within a specified GDDs of
-## the panel mean for plotting
-## Here the GDD breaks are 200, 400 and 750, and any point sampled
-## more than 75 GDDs on either side of those breaks is removed
-## If you change the breaks here, you must change them above too.
-inD2LR <- inDLR %>%
-  mutate(fA=ifelse(abs(200-GDD) < 75, 200, 0),
-         fB=ifelse(abs(400-GDD) < 75, 400, 0),
-         fC=ifelse(abs(750-GDD) < 75, 750, 0)) %>%
-  mutate(GDD=fA+fB+fC) %>%
-  dplyr::select(-c(fA, fB, fC)) %>%
-  filter(GDD != 0)
-
-
-
-## A three-panel plot showing the beetles collected within +/- 75 GDDs
-## of each of the three times, and the relationship with distance
-## at nine different deciles.
-ggplot(prDLR) +
-  geom_line(aes(x=dist, y=fit, colour=quantile, group=quantile), size=1.25) +
-  geom_jitter(data=inD2LR, aes(x=dist, y=elytraLength), 
-              alpha=0.05, width=10, height=0, colour="black") + 
-  facet_wrap(~as.factor(GDD), ncol=3) +
-  theme_light() +
-  scale_colour_viridis_c(option="E") +
-  coord_cartesian(ylim=c(1.75,11)) +
-  ylab("Elytra length (mm)") +
-  xlab("Distance from field margin (m)")
-
-
-
 #Visualize SHASH Models-------------------------------------------------------
 ## Set working directory to location of RDS files
 setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis/SHASH")
@@ -734,7 +627,7 @@ ggplot(predicted_m13D) +
 predicted_m13D
 
 
-#Visualisation of Abundance GAMS--------------------------------------
+#Visualization of Abundance GAMS--------------------------------------
 #read in the models
 setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis/abundance")
 m1<-read_rds("beetCountGAMNB_1.rds") #smooth
