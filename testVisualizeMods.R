@@ -637,8 +637,8 @@ m4<-read_rds("beetCountGAMNB_4.rds") #crop v non-crop
 m5<-read_rds("beetCountGAMNB_5.rds") #crop v non-crop
 
 #decide which model to use
-AIC(m1, m2, m3)
-AIC(m4, m5)
+AIC(m1, m2, m3) #m1
+AIC(m4, m5) #m5
 
 #visualize using Sam's code - number of beetles over distance
 newdat <- expand.grid(dist=seq(0,200,by=5),GDD=c(300,500,700),inCrop=TRUE,
@@ -672,6 +672,7 @@ cols <- c('blue','purple','red')
     scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
     theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))
 )
+ggsave('./figures/beetCount1.png', p, height=6, width = 10)
 
 #visualize number of beetles over time
 newdat2 <- expand.grid(GDD=seq(0,900,by=5),dist=c(5,100,200),
@@ -706,7 +707,7 @@ cols <- c('blue','purple','red')
 )
 
 #Abundance between crop and non-crop
-newdat3 <- expand.grid(station=c("Crop", "nonCrop"),GDD=c(300,500,700),
+newdat3 <- expand.grid(station=c("nonCrop", "Crop"),GDD=c(300,500,700),
                       year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
 newdat3 <- predict.gam(m5,newdata=newdat3,se.fit = TRUE,
                       exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbNC$BLID)))) %>% 
@@ -716,14 +717,15 @@ newdat3 <- predict.gam(m5,newdata=newdat3,se.fit = TRUE,
   bind_cols(dplyr::select(newdat3,station,GDD),.)
 
 (p <- newdat3 %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
-    ggplot()+geom_errorbar(aes(x=station,ymax=upr,ymin=lwr),alpha=0.2)+
-    geom_point(aes(x=station,y=fit))+
+    ggplot()+geom_errorbar(aes(x=station,ymax=upr,ymin=lwr),alpha=0.9, width=0.1, linewidth=1)+
+    geom_point(aes(x=station,y=fit), size=4)+
     #geom_text(data=dplyr::select(beetDatAbNC,station),aes(x=station,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
     facet_wrap(~GDD)+
     labs(x='crop vs non-crop',y='Number of carabids')+
     #xlim()+
     scale_color_manual(values=cols)+scale_fill_manual(values=cols)
 )
+ggsave('./figures/beetCount2.png', p, height=6, width = 10)
 
 #visualize crop/noncrop elytra qGAMS-------------------------------------------
 
