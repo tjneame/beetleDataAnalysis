@@ -3,6 +3,166 @@ library(tidyverse)
 library(mgcv)
 library(gratia)
 
+setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis")
+#read in CSV
+#If working locally
+beetDat<-read_csv("beetleData.csv")
+beetDatAb<-read_csv("beetleDataAbundance.csv")
+#If working remotely
+#beetDat<-read_sheet("https://docs.google.com/spreadsheets/d/1JZwSNahFrIhxU3e5hNoBBQpLskxCO9A_Top1VlaJe0Y/edit#gid=140253595")
+#beetDatAb<-read_sheet("https://docs.google.com/spreadsheets/d/10-PmZo250m1IqwaqbrAOjKIBZQAassMdgP70SG5OVwI/edit?usp=sharing")
+is_tibble(beetDat)
+
+#make some columns into factors that have been erroneously read as integers and take out the extra BLID
+beetDat <- beetDat %>%
+  mutate(BLID=as.factor(BLID)) %>%
+  mutate(year=as.factor(year)) %>%
+  filter(BLID!="51056") %>%
+  droplevels()
+
+beetDatAb <- beetDatAb %>%
+  mutate(BLID=as.factor(BLID)) %>%
+  mutate(year=as.factor(year)) %>%
+  mutate(station=as.factor(station)) %>%
+  filter(BLID!="51056") %>%
+  droplevels() 
+
+#Center the lat-lon on their means 
+beetDat<-beetDat %>%
+  group_by(BLID) %>% mutate(cLon=mean(lon_dup),cLat=mean(lat_dup)) %>%
+  ungroup()%>% mutate(lon_dup=lon_dup-cLon,lat_dup=lat_dup-cLat)
+
+beetDatAb<-beetDatAb %>%
+  group_by(BLID) %>% mutate(cLon=mean(lon_dup),cLat=mean(lat_dup)) %>%
+  ungroup()%>% mutate(lon_dup=lon_dup-cLon,lat_dup=lat_dup-cLat)
+
+#make NX give negative values for dist
+beetDat <- beetDat %>% 
+  mutate(dist = case_when(station == "N1" ~ -dist,
+                          station == "N2" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N4" ~ -dist,
+                          station == "N5" ~ -dist,
+                          station == "N6" ~ -dist,
+                          TRUE ~ dist)) 
+
+beetDatAb <- beetDatAb %>% 
+  mutate(dist = case_when(station == "N1" ~ -dist,
+                          station == "N2" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N3" ~ -dist,
+                          station == "N4" ~ -dist,
+                          station == "N5" ~ -dist,
+                          station == "N6" ~ -dist,
+                          TRUE ~ dist)) 
+
+
+#make datasets for different analyses
+#first take out variables that wont ever be used (can be commented out so that they can be used if they need to be)
+beetDat<-beetDat %>% 
+  dplyr::select(-BBID) %>% #BBID
+  dplyr::select(-bodyLength) %>% #body length
+  dplyr::select(-order) %>% #Order
+  dplyr::select(-family) %>% #Family
+  dplyr::select(-genus) %>% #genus
+  dplyr::select(-species) %>% #species
+  dplyr::select(-identifyer) %>% #identifyer
+  dplyr::select(-NOTES) %>% #Notes
+  dplyr::select(-trapID) %>% #trapID
+  dplyr::select(-stnDate) %>% #stnDate
+  dplyr::select(-BTID) %>% #BTID
+  dplyr::select(-weatherStn) %>% #weather stn
+  dplyr::select(-midDate) %>% #midDate
+  dplyr::select(-GDDSourceFlag) %>% #GDD source flag
+  dplyr::select(-cLon,-cLat) #clon and clat
+
+beetDatAb<-beetDatAb %>% 
+  dplyr::select(-cLon,-cLat) #clon and clat
+
+#crop only still with distance
+beetDatCrop<-beetDat %>%
+  filter(station != "N1",
+         station != "N2",
+         station != "N3",
+         station != "N3",
+         station != "N4",
+         station != "N5",
+         station != "N6") %>%
+  drop_na()
+
+beetDatAbCrop<-beetDatAb %>%
+  filter(station != "N1",
+         station != "N2",
+         station != "N3",
+         station != "N3",
+         station != "N4",
+         station != "N5",
+         station != "N6") %>%
+  drop_na()
+
+#NonCrop and crop with no distance
+beetDatN<-beetDat %>% 
+  filter(station != "C1",
+         station != "C2",
+         station != "C3",
+         station != "C3",
+         station != "C4",
+         station != "C5",
+         station != "C6",
+         station != "C7",
+         station != "C8",
+         station != "C9") %>%
+  mutate(station="nonCrop")
+
+beetDatC<-beetDat %>%
+  filter(station != "N1",
+         station != "N2",
+         station != "N3",
+         station != "N3",
+         station != "N4",
+         station != "N5",
+         station != "N6") %>%
+  mutate(station="Crop")
+
+beetDatNC<-bind_rows(beetDatC,beetDatN) %>%
+  dplyr::select(-dist)%>%
+  mutate(station=as.factor(station))%>%
+  drop_na()
+
+rm(beetDatC)
+rm(beetDatN)
+
+beetDatAbN<-beetDatAb %>% 
+  filter(station != "C1",
+         station != "C2",
+         station != "C3",
+         station != "C3",
+         station != "C4",
+         station != "C5",
+         station != "C6",
+         station != "C7",
+         station != "C8",
+         station != "C9") %>%
+  mutate(station="nonCrop")
+
+beetDatAbC<-beetDatAb %>%
+  filter(station != "N1",
+         station != "N2",
+         station != "N3",
+         station != "N3",
+         station != "N4",
+         station != "N5",
+         station != "N6") %>%
+  mutate(station="Crop")
+
+beetDatAbNC<-bind_rows(beetDatAbC,beetDatAbN) %>%
+  dplyr::select(-dist)%>%
+  mutate(station=as.factor(station))%>%
+  drop_na()
+
+rm(beetDatAbC)
+rm(beetDatAbN)
 #ELYTRA LENGTH by distance and GDD
 #Outdated: read in previously saved models--------------------------------
 m1<-read_rds("elytraLength_GAMSHASH_2.rds")
@@ -667,10 +827,11 @@ cols <- c('blue','purple','red')
     geom_line(aes(x=dist,y=fit))+
     geom_text(data=dplyr::select(beetDatAbCrop,dist),aes(x=dist,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
     facet_wrap(~GDD)+
-    labs(x='Distance from field edge',y='Number of carabids')+
+    labs(x='Distance from nearest non-crop vegetation area (m)',y='Number of carabids')+
     xlim(0,200)+
     scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
-    theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))
+    theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))+
+    theme_bw()
 )
 ggsave('./figures/beetCount1.png', p, height=6, width = 10)
 
@@ -703,7 +864,8 @@ cols <- c('blue','purple','red')
     labs(x='time in GDD',y='Number of carabids')+
     xlim(125,900)+
     scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
-    theme(legend.position = c(0.5,0.85),legend.background = element_rect(colour='grey'))
+    theme(legend.position = c(0.5,0.85),legend.background = element_rect(colour='grey'))+
+    theme_bw()
 )
 
 #Abundance between crop and non-crop
@@ -721,9 +883,10 @@ newdat3 <- predict.gam(m5,newdata=newdat3,se.fit = TRUE,
     geom_point(aes(x=station,y=fit), size=4)+
     #geom_text(data=dplyr::select(beetDatAbNC,station),aes(x=station,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
     facet_wrap(~GDD)+
-    labs(x='crop vs non-crop',y='Number of carabids')+
+    labs(x='Non-Crop vs Crop',y='Number of carabids')+
     #xlim()+
-    scale_color_manual(values=cols)+scale_fill_manual(values=cols)
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme_bw()
 )
 ggsave('./figures/beetCount2.png', p, height=6, width = 10)
 
