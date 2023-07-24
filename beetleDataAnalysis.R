@@ -407,14 +407,33 @@ gam18<-gam(form18,
                 data=beetDatCrop, method="REML")
 write_rds(gam18, "elytraLength_GAMPoly_18.rds")
 
-#SHASH family with linear for dist and GDD. LS
+#SHASH family with linear for dist and GDD. LS 
+#optimizer set to 'efs' to make run time faster
+
+beetDatCrop_small <- beetDatCrop %>% filter(BLID %in% levels(BLID)[c(1:4,17:20)]) %>% droplevels()
+
 form19<-list(elytraLength~dist*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~dist*GDD+s(BLID,bs="re")+s(lon_dup,lat_dup,by=BLID)+year,
              ~1,
              ~1)
-gam19<-gam(form19,
-           family = shash,
-           data=beetDatCrop, method="REML")
+{
+  a <- Sys.time()
+  gam19<-gam(form19,
+             family = shash,
+             data=beetDatCrop, method="REML",optimizer = 'efs')
+  b <- Sys.time()
+  b-a
+}
+
+# { #Test model
+#   a <- Sys.time()
+#   gam19<-gam(form19,
+#              family = shash,
+#              data=beetDatCrop_small, method="REML",optimizer = 'efs')
+#   b <- Sys.time()
+#   b-a
+# }
+
 write_rds(gam19,"elytraLength_GAMSHASH_19.rds")
 
 #QGAMs for Elytra Length in crop as a function of distance -------------------

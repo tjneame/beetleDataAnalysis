@@ -730,14 +730,14 @@ m14<-read_rds("elytraLength_GAMSHASH_14.rds")
 m15<-read_rds("elytraLength_GAMSHASH_15.rds")
 m16<-read_rds("elytraLength_GAMSHASH_16.rds")
 
-#m13--------------------------------------------------------------------------
-summary(m13)
+#gam19--------------------------------------------------------------------------
+summary(gam19)
 ## Capture the original data back from the model
-m13D <- m13$model %>%
+gam19D <- gam19$model %>%
   as_tibble()
 
 ## Points to predict from
-toPredict_m13D <- expand.grid(dist=seq(0, 200, by=1),
+toPredict_gam19D <- expand.grid(dist=seq(0, 200, by=1),
                              GDD=c(200, 425, 600, 775),
                              year=2021,
                              lon_dup=613521.3,
@@ -747,19 +747,19 @@ toPredict_m13D <- expand.grid(dist=seq(0, 200, by=1),
 
 ## Prepare the predictions, while excluding variance due
 ## to BLID and within-field spatial autocorrelation
-predicted_m13D <- predict.gam(m13, newdata=toPredict_m13D, se.fit=TRUE,
+predicted_gam19D <- predict.gam(gam19, newdata=toPredict_gam19D, se.fit=TRUE,
                              type="response",
                              exclude="s(BLID)")
 
-predicted_m13D <- bind_cols(predicted_m13D$fit, predicted_m13D$se.fit)
-names(predicted_m13D) <- c("location", "scale", "skew", "kurtosis",
+predicted_gam19D <- bind_cols(predicted_gam19D$fit, predicted_gam19D$se.fit)
+names(predicted_gam19D) <- c("location", "scale", "skew", "kurtosis",
                           "se_location", "se_scale", "se_skew", "se_kurtosis")
 
-predicted_m13D <- predicted_m13D %>%
-  bind_cols(toPredict_m13D)
+predicted_gam19D <- predicted_gam19D %>%
+  bind_cols(toPredict_gam19D)
 
 ## Plot the location, at the specified levels of GDD
-ggplot(predicted_m13D) +
+ggplot(predicted_gam19D) +
   geom_line(aes(x=dist, y=location, colour=as.factor(GDD)), lwd=2) +
   geom_ribbon(aes(x=dist, ymin=location-2*se_location, ymax=location+2*se_location, fill=as.factor(GDD)), 
               colour=NA, alpha=0.25) +
@@ -767,7 +767,7 @@ ggplot(predicted_m13D) +
 
 
 ## Plot the scale, at the specified levels of GDD
-ggplot(predicted_m13D) +
+ggplot(predicted_gam19D) +
   geom_line(aes(x=dist, y=scale, colour=as.factor(GDD)), lwd=2) +
   geom_ribbon(aes(x=dist, ymin=scale-2*se_scale, ymax=scale+2*se_scale, fill=as.factor(GDD)), 
               colour=NA, alpha=0.25) +
@@ -779,12 +779,68 @@ ggplot(predicted_m13D) +
 ## standard errors of these estimates for the ribbon). This is not usually what is 
 ## shown with a ribbon. So it requires extra special care to explain it to your
 ## audience (who may have their own -- incorrect -- ideas about what is right)
-ggplot(predicted_m13D) +
+ggplot(predicted_gam19D) +
   geom_line(aes(x=dist, y=location, colour=as.factor(GDD)), lwd=2) +
   geom_ribbon(aes(x=dist, ymin=location+scale, ymax=location-scale, fill=as.factor(GDD)), 
               colour=NA, alpha=0.5) +
   facet_wrap(~as.factor(GDD))
-predicted_m13D
+predicted_gam19D
+
+#gam14 (TEST)--------------------------------------------------------------------------
+summary(m14)
+## Capture the original data back from the model
+m14D <- m14$model %>%
+  as_tibble()
+
+## Points to predict from
+toPredict_m14D <- expand.grid(dist=seq(0, 200, by=1),
+                                GDD=c(200, 425, 600, 775),
+                                year=2021,
+                                lon_dup=613521.3,
+                                lat_dup=5804287,
+                                BLID="41007") %>%
+  as_tibble()
+
+## Prepare the predictions, while excluding variance due
+## to BLID and within-field spatial autocorrelation
+predicted_m14D <- predict.gam(m14, newdata=toPredict_m14D, se.fit=TRUE,
+                                type="response",
+                                exclude="s(BLID)")
+
+predicted_m14D <- bind_cols(predicted_m14D$fit, predicted_m14D$se.fit)
+names(predicted_m14D) <- c("location", "scale", "skew", "kurtosis",
+                             "se_location", "se_scale", "se_skew", "se_kurtosis")
+
+predicted_m14D <- predicted_m14D %>%
+  bind_cols(toPredict_m14D)
+
+## Plot the location, at the specified levels of GDD
+ggplot(predicted_m14D) +
+  geom_line(aes(x=dist, y=location, colour=as.factor(GDD)), lwd=2) +
+  geom_ribbon(aes(x=dist, ymin=location-2*se_location, ymax=location+2*se_location, fill=as.factor(GDD)), 
+              colour=NA, alpha=0.25) +
+  facet_wrap(~as.factor(GDD))
+
+
+## Plot the scale, at the specified levels of GDD
+ggplot(predicted_m14D) +
+  geom_line(aes(x=dist, y=scale, colour=as.factor(GDD)), lwd=2) +
+  geom_ribbon(aes(x=dist, ymin=scale-2*se_scale, ymax=scale+2*se_scale, fill=as.factor(GDD)), 
+              colour=NA, alpha=0.25) +
+  facet_wrap(~as.factor(GDD))
+
+
+
+## Plot the location as the line, and the scale as the ribbon (rather than using the 
+## standard errors of these estimates for the ribbon). This is not usually what is 
+## shown with a ribbon. So it requires extra special care to explain it to your
+## audience (who may have their own -- incorrect -- ideas about what is right)
+ggplot(predicted_m14D) +
+  geom_line(aes(x=dist, y=location, colour=as.factor(GDD)), lwd=2) +
+  geom_ribbon(aes(x=dist, ymin=location+scale, ymax=location-scale, fill=as.factor(GDD)), 
+              colour=NA, alpha=0.5) +
+  facet_wrap(~as.factor(GDD))
+predicted_m14D
 
 
 #Visualization of Abundance GAMS--------------------------------------
