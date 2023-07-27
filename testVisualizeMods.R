@@ -616,7 +616,7 @@ inD2 <- inD %>%
 ## of each of the three times, and the relationship with distance
 ## at nine different deciles.
 ggplot(prD) +
-  geom_line(aes(x=dist, y=fit, colour=quantile, group=quantile), size=1.25) +
+  geom_line(aes(x=dist, y=fit, colour=quantile, group=quantile), linewidth=1.25) +
   geom_jitter(data=inD2, aes(x=dist, y=elytraLength), 
               alpha=0.05, width=10, height=0, colour="black") + 
   facet_wrap(~as.factor(GDD), ncol=3) +
@@ -722,15 +722,11 @@ ggplot(prDSmooth) +
 
 
 #Visualize elytra length distance SHASH Models-------------------
-## Set working directory to location of RDS files
-setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis/SHASH")
-## LOAD THE GAM RDS OBJECTS
-m13<-read_rds("elytraLength_GAMSHASH_13.rds")
-m14<-read_rds("elytraLength_GAMSHASH_14.rds")
-m15<-read_rds("elytraLength_GAMSHASH_15.rds")
-m16<-read_rds("elytraLength_GAMSHASH_16.rds")
 
-#gam19--------------------------------------------------------------------------
+#gam19 
+#######################################################/
+setwd("C:/Users/tobyn.neame/Documents/MScWorking/beetleDataAnalysis")
+gam19<-read_rds("elytraLength_GAMSHASH_19.rds")
 summary(gam19)
 ## Capture the original data back from the model
 gam19D <- gam19$model %>%
@@ -740,8 +736,8 @@ gam19D <- gam19$model %>%
 toPredict_gam19D <- expand.grid(dist=seq(0, 200, by=1),
                              GDD=c(200, 425, 600, 775),
                              year=2021,
-                             lon_dup=613521.3,
-                             lat_dup=5804287,
+                             lon_dup=0,
+                             lat_dup=0,
                              BLID="41007") %>%
   as_tibble()
 
@@ -749,7 +745,7 @@ toPredict_gam19D <- expand.grid(dist=seq(0, 200, by=1),
 ## to BLID and within-field spatial autocorrelation
 predicted_gam19D <- predict.gam(gam19, newdata=toPredict_gam19D, se.fit=TRUE,
                              type="response",
-                             exclude="s(BLID)")
+                             exclude=c("s(BLID)", "s(lon_dup,lat_dup):BLID41007"))
 
 predicted_gam19D <- bind_cols(predicted_gam19D$fit, predicted_gam19D$se.fit)
 names(predicted_gam19D) <- c("location", "scale", "skew", "kurtosis",
@@ -786,7 +782,8 @@ ggplot(predicted_gam19D) +
   facet_wrap(~as.factor(GDD))
 predicted_gam19D
 
-#gam14 (TEST)--------------------------------------------------------------------------
+#gam14 (TEST)
+#####################################################################/
 summary(m14)
 ## Capture the original data back from the model
 m14D <- m14$model %>%
@@ -842,109 +839,12 @@ ggplot(predicted_m14D) +
   facet_wrap(~as.factor(GDD))
 predicted_m14D
 
+#GAM 12 (The big one)
+############################################################################/
 
-#Visualization of Abundance GAMS--------------------------------------
-#read in the models
-setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis/abundance")
-m1<-read_rds("beetCountGAMNB_1.rds") #smooth
-m2<-read_rds("beetCountGAMNB_2.rds") #linear
-m3<-read_rds("beetCountGAMNB_3.rds") #linear
-m4<-read_rds("beetCountGAMNB_4.rds") #crop v non-crop
-m5<-read_rds("beetCountGAMNB_5.rds") #crop v non-crop
+gam12<-read_rds("elytraLength_GAMSHASH_12.rds")
+summary(gam12) #this takes awhile given that the model is 5.6GB
 
-#decide which model to use
-AIC(m1, m2, m3) #m1
-AIC(m4, m5) #m5
-
-#visualize using Sam's code - number of beetles over distance
-newdat <- expand.grid(dist=seq(0,200,by=5),GDD=c(300,500,700),inCrop=TRUE,
-                      year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
-newdat <- predict.gam(m1,newdata=newdat,se.fit = TRUE,
-                      exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
-  do.call('data.frame',.) %>% 
-  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
-  mutate(across(c(fit,upr,lwr),exp)) %>% 
-  bind_cols(dplyr::select(newdat,dist,GDD),.)
-
-cols <- c('blue','purple','red')
-
-(p <- newdat %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
-    ggplot(aes(x=dist))+geom_ribbon(aes(ymax=upr,ymin=lwr,fill=GDD),alpha=0.2)+
-    geom_line(aes(y=fit,col=GDD))+
-    geom_text(data=beetDatAbCrop,aes(x=dist,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
-    labs(x='Distance from field edge',y='Number of carabids')+
-    xlim(0,200)+
-    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
-    theme(legend.position = c(0.85,0.85),legend.background = element_rect(colour='grey'))
-)
-
-(p <- newdat %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
-    ggplot()+geom_ribbon(aes(x=dist,ymax=upr,ymin=lwr),alpha=0.2)+
-    geom_line(aes(x=dist,y=fit))+
-    geom_text(data=dplyr::select(beetDatAbCrop,dist),aes(x=dist,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
-    facet_wrap(~GDD)+
-    labs(x='Distance from nearest non-crop vegetation area (m)',y='Number of carabids')+
-    xlim(0,200)+
-    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
-    theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))+
-    theme_bw()
-)
-ggsave('./figures/beetCount1.png', p, height=6, width = 10)
-
-#visualize number of beetles over time
-newdat2 <- expand.grid(GDD=seq(0,900,by=5),dist=c(5,100,200),
-                      year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
-newdat2 <- predict.gam(m1,newdata=newdat2,se.fit = TRUE,
-                      exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
-  do.call('data.frame',.) %>% 
-  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
-  mutate(across(c(fit,upr,lwr),exp)) %>% 
-  bind_cols(dplyr::select(newdat2,GDD,dist),.)
-
-cols <- c('blue','purple','red')
-
-(p <- newdat2 %>% mutate(dist=factor(dist,labels = c('Near (5)','Mid (100)','Far (200)'))) %>% 
-    ggplot()+geom_ribbon(aes(x=GDD,ymax=upr,ymin=lwr),alpha=0.2)+
-    geom_line(aes(x=GDD,y=fit))+
-    geom_text(data=dplyr::select(beetDatAbCrop,GDD),aes(x=GDD,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
-    facet_wrap(~dist)+
-    labs(x='time in GDD',y='Number of carabids')+
-    xlim(125,900)+
-    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
-    theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))
-)
-(p <- newdat2 %>% mutate(dist=factor(dist,labels = c('Near (5)','Mid (100)','Far (200)'))) %>% 
-    ggplot(aes(x=GDD))+geom_ribbon(aes(ymax=upr,ymin=lwr,fill=dist),alpha=0.2)+
-    geom_line(aes(y=fit,col=dist))+
-    geom_text(data=beetDatAbCrop,aes(x=GDD,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
-    labs(x='time in GDD',y='Number of carabids')+
-    xlim(125,900)+
-    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
-    theme(legend.position = c(0.5,0.85),legend.background = element_rect(colour='grey'))+
-    theme_bw()
-)
-
-#Abundance between crop and non-crop
-newdat3 <- expand.grid(station=c("nonCrop", "Crop"),GDD=c(300,500,700),
-                      year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
-newdat3 <- predict.gam(m5,newdata=newdat3,se.fit = TRUE,
-                      exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbNC$BLID)))) %>% 
-  do.call('data.frame',.) %>% 
-  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
-  mutate(across(c(fit,upr,lwr),exp)) %>% 
-  bind_cols(dplyr::select(newdat3,station,GDD),.)
-
-(p <- newdat3 %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
-    ggplot()+geom_errorbar(aes(x=station,ymax=upr,ymin=lwr),alpha=0.9, width=0.1, linewidth=1)+
-    geom_point(aes(x=station,y=fit), size=4)+
-    #geom_text(data=dplyr::select(beetDatAbNC,station),aes(x=station,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
-    facet_wrap(~GDD)+
-    labs(x='Non-Crop vs Crop',y='Number of carabids')+
-    #xlim()+
-    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
-    theme_bw()
-)
-ggsave('./figures/beetCount2.png', p, height=6, width = 10)
 
 #visualize crop/noncrop elytra qGAMS-------------------------------------------
 
@@ -984,7 +884,7 @@ quantilesGDD <- c(0.1, 0.43, 0.9)
 ## If you change them you need to make sure the numbers
 ## are consistent further down.
 pr_inD <- expand.grid(
-  station = c("Crop","nonCrop"),
+  station = c("nonCrop","Crop"),
   GDD=c(200,400, 750)) %>%
   bind_cols(
     tibble(BLID="41014",
@@ -1049,3 +949,105 @@ ggplot(prD) +
 setwd("C:/Users/tobyn.neame/Documents/MScWorking/beetleDataAnalysis")
 m20<-read_rds("cropNonCrop_GAMSHASH_20.rds")
 summary(m20)
+#Visualization of Abundance GAMS--------------------------------------
+#read in the models
+setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis/abundance")
+m1<-read_rds("beetCountGAMNB_1.rds") #smooth
+m2<-read_rds("beetCountGAMNB_2.rds") #linear
+m3<-read_rds("beetCountGAMNB_3.rds") #linear
+m4<-read_rds("beetCountGAMNB_4.rds") #crop v non-crop
+m5<-read_rds("beetCountGAMNB_5.rds") #crop v non-crop
+
+#decide which model to use
+AIC(m1, m2, m3) #m1
+AIC(m4, m5) #m5
+
+#visualize using Sam's code - number of beetles over distance
+newdat <- expand.grid(dist=seq(0,200,by=5),GDD=c(300,500,700),inCrop=TRUE,
+                      year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
+newdat <- predict.gam(m1,newdata=newdat,se.fit = TRUE,
+                      exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
+  do.call('data.frame',.) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(across(c(fit,upr,lwr),exp)) %>% 
+  bind_cols(dplyr::select(newdat,dist,GDD),.)
+
+cols <- c('blue','purple','red')
+
+(p <- newdat %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
+    ggplot(aes(x=dist))+geom_ribbon(aes(ymax=upr,ymin=lwr,fill=GDD),alpha=0.2)+
+    geom_line(aes(y=fit,col=GDD))+
+    geom_text(data=beetDatAbCrop,aes(x=dist,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    labs(x='Distance from field edge',y='Number of carabids')+
+    xlim(0,200)+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme(legend.position = c(0.85,0.85),legend.background = element_rect(colour='grey'))
+)
+
+(p <- newdat %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
+    ggplot()+geom_ribbon(aes(x=dist,ymax=upr,ymin=lwr),alpha=0.2)+
+    geom_line(aes(x=dist,y=fit))+
+    geom_text(data=dplyr::select(beetDatAbCrop,dist),aes(x=dist,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    facet_wrap(~GDD)+
+    labs(x='Distance from nearest non-crop vegetation area (m)',y='Number of carabids')+
+    xlim(0,200)+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))+
+    theme_bw()
+)
+ggsave('./figures/beetCount1.png', p, height=6, width = 10)
+
+#visualize number of beetles over time
+newdat2 <- expand.grid(GDD=seq(0,900,by=5),dist=c(5,100,200),
+                       year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
+newdat2 <- predict.gam(m1,newdata=newdat2,se.fit = TRUE,
+                       exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
+  do.call('data.frame',.) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(across(c(fit,upr,lwr),exp)) %>% 
+  bind_cols(dplyr::select(newdat2,GDD,dist),.)
+
+cols <- c('blue','purple','red')
+
+(p <- newdat2 %>% mutate(dist=factor(dist,labels = c('Near (5)','Mid (100)','Far (200)'))) %>% 
+    ggplot()+geom_ribbon(aes(x=GDD,ymax=upr,ymin=lwr),alpha=0.2)+
+    geom_line(aes(x=GDD,y=fit))+
+    geom_text(data=dplyr::select(beetDatAbCrop,GDD),aes(x=GDD,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    facet_wrap(~dist)+
+    labs(x='time in GDD',y='Number of carabids')+
+    xlim(125,900)+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))
+)
+(p <- newdat2 %>% mutate(dist=factor(dist,labels = c('Near (5)','Mid (100)','Far (200)'))) %>% 
+    ggplot(aes(x=GDD))+geom_ribbon(aes(ymax=upr,ymin=lwr,fill=dist),alpha=0.2)+
+    geom_line(aes(y=fit,col=dist))+
+    geom_text(data=beetDatAbCrop,aes(x=GDD,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    labs(x='time in GDD',y='Number of carabids')+
+    xlim(125,900)+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme(legend.position = c(0.5,0.85),legend.background = element_rect(colour='grey'))+
+    theme_bw()
+)
+
+#Abundance between crop and non-crop
+newdat3 <- expand.grid(station=c("nonCrop", "Crop"),GDD=c(300,500,700),
+                       year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
+newdat3 <- predict.gam(m5,newdata=newdat3,se.fit = TRUE,
+                       exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbNC$BLID)))) %>% 
+  do.call('data.frame',.) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(across(c(fit,upr,lwr),exp)) %>% 
+  bind_cols(dplyr::select(newdat3,station,GDD),.)
+
+(p <- newdat3 %>% mutate(GDD=factor(GDD,labels = c('Early (300)','Mid (500)','Late (700)'))) %>% 
+    ggplot()+geom_errorbar(aes(x=station,ymax=upr,ymin=lwr),alpha=0.9, width=0.1, linewidth=1)+
+    geom_point(aes(x=station,y=fit), size=4)+
+    #geom_text(data=dplyr::select(beetDatAbNC,station),aes(x=station,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
+    facet_wrap(~GDD)+
+    labs(x='Non-Crop vs Crop',y='Number of carabids')+
+    #xlim()+
+    scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
+    theme_bw()
+)
+ggsave('./figures/beetCount2.png', p, height=6, width = 10)
