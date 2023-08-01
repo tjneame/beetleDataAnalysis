@@ -793,8 +793,8 @@ m14D <- m14$model %>%
 toPredict_m14D <- expand.grid(dist=seq(0, 200, by=1),
                                 GDD=c(200, 425, 600, 775),
                                 year=2021,
-                                lon_dup=613521.3,
-                                lat_dup=5804287,
+                                lon_dup=0,
+                                lat_dup=0,
                                 BLID="41007") %>%
   as_tibble()
 
@@ -842,9 +842,72 @@ predicted_m14D
 #GAM 12 (The big one)
 ############################################################################/
 
-gam12<-read_rds("elytraLength_GAMSHASH_12.rds")
-summary(gam12) #this takes awhile given that the model is 5.6GB
+m12<-read_rds("elytraLength_GAMSHASH_12.rds")
+#summary(gam12) #this takes awhile given that the model is 5.6GB
+m12D <- m12$model %>%
+  as_tibble()
 
+## Points to predict from
+toPredict_m12D <- expand.grid(dist=seq(0, 200, by=1),
+                              GDD=c(200, 425, 600, 775),
+                              year=2021,
+                              lon_dup=0,
+                              lat_dup=0,
+                              BLID="41007") %>%
+  as_tibble()
+
+## Prepare the predictions, while excluding variance due
+## to BLID and within-field spatial autocorrelation
+predicted_m12D <- predict.gam(m12, newdata=toPredict_m12D, se.fit=TRUE,
+                              type="response",
+                              exclude="s(BLID)")
+
+predicted_m12D <- bind_cols(predicted_m12D$fit, predicted_m12D$se.fit)
+names(predicted_m12D) <- c("location", "scale", "skew", "kurtosis",
+                           "se_location", "se_scale", "se_skew", "se_kurtosis")
+
+predicted_m12D <- predicted_m12D %>%
+  bind_cols(toPredict_m12D)
+
+## Plot the location, at the specified levels of GDD
+ggplot(predicted_m12D) +
+  geom_line(aes(x=dist, y=location, colour=as.factor(GDD)), lwd=2) +
+  geom_ribbon(aes(x=dist, ymin=location-2*se_location, ymax=location+2*se_location, fill=as.factor(GDD)), 
+              colour=NA, alpha=0.25) +
+  facet_wrap(~as.factor(GDD))
+
+
+## Plot the scale, at the specified levels of GDD
+ggplot(predicted_m12D) +
+  geom_line(aes(x=dist, y=scale, colour=as.factor(GDD)), lwd=2) +
+  geom_ribbon(aes(x=dist, ymin=scale-2*se_scale, ymax=scale+2*se_scale, fill=as.factor(GDD)), 
+              colour=NA, alpha=0.25) +
+  facet_wrap(~as.factor(GDD))
+
+
+
+## Plot the location as the line, and the scale as the ribbon (rather than using the 
+## standard errors of these estimates for the ribbon). This is not usually what is 
+## shown with a ribbon. So it requires extra special care to explain it to your
+## audience (who may have their own -- incorrect -- ideas about what is right)
+ggplot(predicted_m12D) +
+  geom_line(aes(x=dist, y=location, colour=as.factor(GDD)), lwd=2) +
+  geom_ribbon(aes(x=dist, ymin=location+scale, ymax=location-scale, fill=as.factor(GDD)), 
+              colour=NA, alpha=0.5) +
+  facet_wrap(~as.factor(GDD))
+
+#Visualize skew
+ggplot(predicted_m12D) +
+  geom_line(aes(x=dist, y=skew, colour=as.factor(GDD)), lwd=2) +
+  geom_ribbon(aes(x=dist, ymin=skew-2*se_skew, ymax=skew+2*se_skew, fill=as.factor(GDD)), 
+              colour=NA, alpha=0.25) +
+  facet_wrap(~as.factor(GDD))
+#Visualize kurtosis
+ggplot(predicted_m12D) +
+  geom_line(aes(x=dist, y=kurtosis, colour=as.factor(GDD)), lwd=2) +
+  geom_ribbon(aes(x=dist, ymin=kurtosis-2*se_kurtosis, ymax=kurtosis+2*se_kurtosis, fill=as.factor(GDD)), 
+              colour=NA, alpha=0.25) +
+  facet_wrap(~as.factor(GDD))
 
 #visualize crop/noncrop elytra qGAMS-------------------------------------------
 
