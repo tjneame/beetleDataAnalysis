@@ -2,6 +2,7 @@
 library(tidyverse)
 library(mgcv)
 library(gratia)
+library(DHARMa)
 
 setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis")
 #read in CSV
@@ -1015,16 +1016,14 @@ summary(m20)
 #Visualization of Abundance GAMS--------------------------------------
 #read in the models
 setwd("/Users/tobynneame/Documents/School/MastersData/beetleDataAnalysis/abundance")
-m1<-read_rds("beetCountGAMNB_1.rds") #smooth
-m2<-read_rds("beetCountGAMNB_2.rds") #linear
-m3<-read_rds("beetCountGAMNB_3.rds") #linear
-m4<-read_rds("beetCountGAMNB_4.rds") #crop v non-crop
-m5<-read_rds("beetCountGAMNB_5.rds") #crop v non-crop
+m1<-read_rds("beetCountGAMDist_final.rds") #smooth dist
+m2<-read_rds("beetCountGAMNCC_final.rds") #crop v non-crop
 
-#decide which model to use
-AIC(m1, m2, m3) #m1
-AIC(m4, m5) #m5
-
+#test the models
+simulateResiduals(m1, plot=T)
+summary(m1)
+simulateResiduals(m2, plot=T)
+summary(m2)
 #visualize using Sam's code - number of beetles over distance
 newdat <- expand.grid(dist=seq(0,200,by=5),GDD=c(300,500,700),inCrop=TRUE,
                       year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
@@ -1096,7 +1095,7 @@ cols <- c('blue','purple','red')
 #Abundance between crop and non-crop
 newdat3 <- expand.grid(station=c("nonCrop", "Crop"),GDD=c(300,500,700),
                        year='2021',BLID='41007',lon_dup=0,lat_dup=0) 
-newdat3 <- predict.gam(m5,newdata=newdat3,se.fit = TRUE,
+newdat3 <- predict.gam(m2,newdata=newdat3,se.fit = TRUE,
                        exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbNC$BLID)))) %>% 
   do.call('data.frame',.) %>% 
   mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 

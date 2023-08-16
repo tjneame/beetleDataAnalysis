@@ -545,12 +545,12 @@ qGAM9LineNC<-qgam(data=beetDatNC, qu=0.9, form=qformLineNC)
 write_rds(qGAM9LineNC, "qGAM9LineNC.rds")
 #Beetle abundance by distance within the crop models ---------------------------------------------------- 
 
-#Smooth k=25
-formBC1 <- as.formula(beetCount ~ s(dist) + #Distance from edge
-                     s(GDD) + #Growing degree day
-                     ti(dist,GDD) + #Distance:GDD interaction
+#Smooth k=25 with extra penalization on smooth terms
+formBC1 <- as.formula(beetCount ~ s(dist, bs='ts') + #Distance from edge
+                     s(GDD, bs='ts') + #Growing degree day
+                     ti(dist,GDD, bs='ts') + #Distance:GDD interaction
                      year + #Year 
-                     s(lon_dup,lat_dup,by=BLID, k=25) + #Within-field distances
+                     s(lon_dup,lat_dup,by=BLID, k=25, bs='ts') + #Within-field distances
                      s(BLID,bs='re')) #Between-field
 #Linear k=25
 formBC2 <- as.formula(beetCount ~ dist*GDD + #Distance:GDD interaction and main
@@ -566,7 +566,7 @@ formBC3 <- as.formula(beetCount ~ dist*GDD + #Distance:GDD interaction and main
 beetCountGAMNB_1 <- gam(formula = formBC1,
                         family = nb,
                         data=beetDatAbCrop)
-write_rds(beetCountGAMNB_1, "beetCountGAMNB_1.rds")
+write_rds(beetCountGAMNB_1, "beetCountGAMDist_final.rds")
 
 #Linear k=25
 beetCountGAMNB_2 <- gam(formula = formBC2,
@@ -587,10 +587,12 @@ formBC4 <- as.formula(beetCount ~ station*GDD + #Distance:GDD interaction and ma
                         year + #Year 
                         s(lon_dup,lat_dup,by=BLID, k=25) + #Within-field distances
                         s(BLID,bs='re')) #Between-field 
-#Linear k=45
-formBC5 <- as.formula(beetCount ~ station*GDD + #Distance:GDD interaction and main
+#Linear k=44
+formBC5 <- as.formula(beetCount ~ station + #location
+                        s(GDD, bs='ts') + #median growing degree day
+                        s(GDD, by=station, bs='ts') + #Location:GDD interaction
                         year + #Year 
-                        s(lon_dup,lat_dup,by=BLID, k=45) + #Within-field distances
+                        s(lon_dup,lat_dup,by=BLID, k=44, bs='ts') + #Within-field distances
                         s(BLID,bs='re')) #Between-field
 
 #Linear k=25
@@ -599,8 +601,8 @@ beetCountGAMNB_4 <- gam(formula = formBC4,
                         data=beetDatAbNC)
 write_rds(beetCountGAMNB_4, "beetCountGAMNB_4.rds")
 
-#Linear k=45
+#Linear k=44
 beetCountGAMNB_5 <- gam(formula = formBC5,
                         family = nb,
                         data=beetDatAbNC)
-write_rds(beetCountGAMNB_5, "beetCountGAMNB_5.rds")
+write_rds(beetCountGAMNB_5, "beetCountGAMNCC_final.rds")
