@@ -617,16 +617,16 @@ inD2 <- inD %>%
 ## of each of the three times, and the relationship with distance
 ## at nine different deciles.
 ggplot(prD) +
-  geom_line(aes(x=dist, y=fit, colour=quantile, group=quantile), linewidth=1.25) +
+  geom_line(aes(x=dist, y=fit, colour=quantile, group=quantile), linewidth=0.5) +
   geom_jitter(data=inD2, aes(x=dist, y=elytraLength), 
-              alpha=0.05, width=10, height=0, colour="black") + 
+              alpha=0.01, width=10, height=0, colour="black") + 
   facet_wrap(~as.factor(GDD), ncol=3) +
-  theme_light() +
-  scale_colour_viridis_c(option="E") +
+  theme_bw() +
+  scale_colour_viridis_c(option="D", end = 0.75, name='Quantile')+
   coord_cartesian(ylim=c(1.75,11)) +
   ylab("Elytra length (mm)") +
   xlab("Distance from field margin (m)")
-
+ggsave('./figures/qgamElytraLength.png', width = 5, height = 3)
 #Try with smooth qgams - elytra length distance --------------------------------------------------
 
 ## LOAD THE QGAM RDS OBJECTS
