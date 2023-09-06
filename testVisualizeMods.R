@@ -538,6 +538,43 @@ objectsToLoad <- paste0("elytraLength_", "QGAM_", 1:9, "_LINE.rds")
 allModels <- map(objectsToLoad, read_rds)
 names(allModels) <- objectsToLoad
 
+q1<-read_rds('elytraLength_QGAM_1_LINE.rds')
+q2<-read_rds('elytraLength_QGAM_2_LINE.rds')
+q3<-read_rds('elytraLength_QGAM_3_LINE.rds')
+q4<-read_rds('elytraLength_QGAM_4_LINE.rds')
+q5<-read_rds('elytraLength_QGAM_5_LINE.rds')
+q6<-read_rds('elytraLength_QGAM_6_LINE.rds')
+q7<-read_rds('elytraLength_QGAM_7_LINE.rds')
+q8<-read_rds('elytraLength_QGAM_8_LINE.rds')
+q9<-read_rds('elytraLength_QGAM_9_LINE.rds')
+
+summary(q1)
+broom::tidy(q1)%>%
+  write_csv('q1Summary.csv')
+summary(q2)
+broom::tidy(q2)%>%
+  write_csv('q2Summary.csv')
+summary(q3)
+broom::tidy(q3)%>%
+  write_csv('q3Summary.csv')
+summary(q4)
+broom::tidy(q4)%>%
+  write_csv('q4Summary.csv')
+summary(q5)
+broom::tidy(q5)%>%
+  write_csv('q5Summary.csv')
+summary(q6)
+broom::tidy(q6)%>%
+  write_csv('q6Summary.csv')
+summary(q7)
+broom::tidy(q7)%>%
+  write_csv('q7Summary.csv')
+summary(q8)
+broom::tidy(q8)%>%
+  write_csv('q8Summary.csv')
+summary(q9)
+broom::tidy(q9)%>%
+  write_csv('q9Summary.csv')
 
 ## Some quick tricks for visualizing results
 ## These will work with any GAM or qGAM 
@@ -617,16 +654,16 @@ inD2 <- inD %>%
 ## of each of the three times, and the relationship with distance
 ## at nine different deciles.
 ggplot(prD) +
-  geom_line(aes(x=dist, y=fit, colour=quantile, group=quantile), linewidth=0.5) +
+  geom_line(aes(x=dist, y=fit, colour=quantile, group=quantile), linewidth=1.25) +
   geom_jitter(data=inD2, aes(x=dist, y=elytraLength), 
-              alpha=0.01, width=10, height=0, colour="black") + 
+              alpha=0.05, width=10, height=0, colour="black") + 
   facet_wrap(~as.factor(GDD), ncol=3) +
   theme_bw() +
-  scale_colour_viridis_c(option="D", end = 0.75, name='Quantile')+
+  scale_colour_viridis_c(option="D", end = 0.85, begin = 0.25, name='Quantile', direction = -1)+
   coord_cartesian(ylim=c(1.75,11)) +
   ylab("Elytra length (mm)") +
   xlab("Distance from field margin (m)")
-ggsave('./figures/qgamElytraLength.png', width = 5, height = 3)
+ggsave('./figures/qgamElytraLength.png', width = 10, height = 5)
 #Try with smooth qgams - elytra length distance --------------------------------------------------
 
 ## LOAD THE QGAM RDS OBJECTS
@@ -999,15 +1036,15 @@ inD2 <- inD %>%
 ## of each of the three times, and the relationship with distance
 ## at nine different deciles.
 ggplot(prD) +
-  geom_line(aes(x=station, y=fit, colour=quantile, group=quantile), size=1.25) +
+  geom_line(aes(x=station, y=fit, colour=quantile, group=quantile), linewidth=1.25) +
   geom_jitter(data=inD2, aes(x=station, y=elytraLength), 
               alpha=0.05, width=.05, height=0, colour="black") + 
   facet_wrap(~as.factor(GDD), ncol=3) +
-  theme_light() +
-  scale_colour_viridis_c(option="E") +
+  theme_bw() +
+  scale_colour_viridis_c(option="D", end = 0.75, name='Quantile')+
   coord_cartesian(ylim=c(1.75,11)) +
   ylab("Elytra length (mm)") +
-  xlab("Crop vs non-crop")
+  xlab("Non-Crop vs Crop")
 
 #Summary crop/noncrop elytra SHASH--------------------------------------------------
 setwd("C:/Users/tobyn.neame/Documents/MScWorking/beetleDataAnalysis")
