@@ -1067,7 +1067,7 @@ newdat <- expand.grid(dist=seq(0,200,by=5),GDD=c(300,500,700),inCrop=TRUE,
 newdat <- predict.gam(m1,newdata=newdat,se.fit = TRUE,
                       exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
   do.call('data.frame',.) %>% 
-  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(upr=fit+se.fit,lwr=fit-se.fit) %>% 
   mutate(across(c(fit,upr,lwr),exp)) %>% 
   bind_cols(dplyr::select(newdat,dist,GDD),.)
 
@@ -1094,7 +1094,7 @@ cols <- c('blue','purple','red')
     theme(legend.position = c(0.15,0.85),legend.background = element_rect(colour='grey'))+
     theme_bw()
 )
-ggsave('./figures/beetCount1.png', p, height=6, width = 10)
+ggsave('./figures/beetCount1.png', p, height=6, width = 10, scale=0.7)
 
 #visualize number of beetles over time
 newdat2 <- expand.grid(GDD=seq(0,900,by=5),dist=c(5,100,200),
@@ -1135,7 +1135,7 @@ newdat3 <- expand.grid(station=c("nonCrop", "Crop"),GDD=c(300,500,700),
 newdat3 <- predict.gam(m2,newdata=newdat3,se.fit = TRUE,
                        exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbNC$BLID)))) %>% 
   do.call('data.frame',.) %>% 
-  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(upr=fit+se.fit,lwr=fit-se.fit) %>% 
   mutate(across(c(fit,upr,lwr),exp)) %>% 
   bind_cols(dplyr::select(newdat3,station,GDD),.)
 
@@ -1144,9 +1144,9 @@ newdat3 <- predict.gam(m2,newdata=newdat3,se.fit = TRUE,
     geom_point(aes(x=station,y=fit), size=4)+
     #geom_text(data=dplyr::select(beetDatAbNC,station),aes(x=station,y=0.05),label='|',position=position_jitter(width = 1, height=0),alpha=0.4,size=2)+
     facet_wrap(~GDD)+
-    labs(x='Non-Crop vs Crop',y='Number of carabids')+
+    labs(x='Location of Sampling',y='Number of carabids')+
     #xlim()+
     scale_color_manual(values=cols)+scale_fill_manual(values=cols)+
     theme_bw()
 )
-ggsave('./figures/beetCount2.png', p, height=6, width = 10)
+ggsave('./figures/beetCount2.png', p, height=6, width = 10, scale=0.7)
