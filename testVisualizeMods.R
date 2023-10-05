@@ -1067,7 +1067,7 @@ newdat <- expand.grid(dist=seq(0,200,by=5),GDD=c(300,500,700),inCrop=TRUE,
 newdat <- predict.gam(m1,newdata=newdat,se.fit = TRUE,
                       exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbCrop$BLID)))) %>% 
   do.call('data.frame',.) %>% 
-  mutate(upr=fit+se.fit,lwr=fit-se.fit) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
   mutate(across(c(fit,upr,lwr),exp)) %>% 
   bind_cols(dplyr::select(newdat,dist,GDD),.)
 
@@ -1135,7 +1135,7 @@ newdat3 <- expand.grid(station=c("nonCrop", "Crop"),GDD=c(300,500,700),
 newdat3 <- predict.gam(m2,newdata=newdat3,se.fit = TRUE,
                        exclude = c('s(BLID)',paste0('s(lon_dup,lat_dup):BLID',levels(beetDatAbNC$BLID)))) %>% 
   do.call('data.frame',.) %>% 
-  mutate(upr=fit+se.fit,lwr=fit-se.fit) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
   mutate(across(c(fit,upr,lwr),exp)) %>% 
   bind_cols(dplyr::select(newdat3,station,GDD),.)
 
