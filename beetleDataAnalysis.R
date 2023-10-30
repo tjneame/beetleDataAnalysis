@@ -606,3 +606,103 @@ beetCountGAMNB_5 <- gam(formula = formBC5,
                         family = nb,
                         data=beetDatAbNC)
 write_rds(beetCountGAMNB_5, "beetCountGAMNCC_final.rds")
+
+#Beetle abundance in crop and non-crop models for manuscript-----------------
+## SR and TN /
+
+beetDatAb2 <- beetDatAb %>% 
+  # mutate(isNonCrop=grepl('N',as.character(station))) %>%
+  mutate(isNonCrop=factor(ifelse(grepl('N',station),'NonCrop','Crop'))) %>% 
+  mutate(cDist = ifelse(grepl('N',station),0,dist))
+
+
+mForm <- as.formula(beetCount ~ 
+                      #"Main effects"
+                      s(cDist) + #Distance from edge
+                      isNonCrop + #Difference b/w crop and non crop (at dist=0)
+                      s(GDD,by=isNonCrop) + #median growing degree day 
+                      s(lon_dup,lat_dup,by=BLID) + #Within-field distances
+                      #"Interactions"
+                      ti(GDD,cDist) + #GDD:Distance
+                      s(BLID,bs='re')) #Between-field re
+
+library(parallel)
+cl <- makeCluster(5)
+gamN <- bam(formula = mForm,family='nb',data=beetDatAb2,cluster = cl,samfrac=0.1)
+stopCluster(cl)
+
+summary(gamN)
+plot(gamN)
+
+par(mfrow=c(2,2));gam.check(gamN);abline(0,1,col='red');par(mfrow=c(1,1))
+
+library(DHARMa)
+gamN_simRes <- simulateResiduals(gamN,n=1000)
+plot(gamN_simRes)
+testZeroInflation(gamN_simRes)
+testOutliers(gamN_simRes, type = "binomial")
+testCategorical(gamN_simRes, beetDatAb2$isNonCrop)
+testCategorical(gamN_simRes, beetDatAb2$BLID)
+
+#Check for site-to-site spatial AC
+reCoefs <- gamN$coefficients[grepl('s(BLID).',names(gamN$coefficients),fixed = TRUE)]
+
+beetDatAb2 %>% select(BLID,cLon,cLat) %>% distinct() %>% 
+  mutate(ranef=reCoefs) %>% 
+  ggplot(aes(x=cLon,y=cLat))+geom_point(aes(size=abs(ranef),col=ranef))+
+  scale_color_gradient2(low='red',high='blue')
+
+#Calculate Moran's I
+blid_weight <- beetDatAb2 %>% select(cLon,cLat) %>% distinct() %>% 
+  dist() %>% as.matrix() 
+blid_weight <- 1/blid_weight
+diag(blid_weight) <- 0
+ape::Moran.I(reCoefs,blid_weight) #No problem here (cite in paper)
+
+#Check for temporal AC
+beetDatAb2 %>% mutate(res=residuals(gamN,type='deviance')) %>% 
+  ggplot(aes(x=GDD,y=res))+geom_point()+
+  geom_smooth(method='loess',se=TRUE)
+
+beetDatAb2 %>% mutate(res=residuals(gamN,type='deviance')) %>% 
+  ggplot(aes(x=GDD,y=res))+geom_point()+
+  geom_smooth(method='loess',se=TRUE)+
+  facet_wrap(~BLID)
+
+#Make some partial effects plots
+library(ggeffects)
+theme_set(theme_bw())
+
+ggpredict(gamN,terms=c('cDist','isNonCrop')) %>% 
+  data.frame() %>% 
+  filter(x==0|group=='Crop')
+
+#Predictions for noncrop
+dontUse <- c('BLID','lon_dup','lat_dup')
+useGDD <- c(300,500,700)
+gddLabs <- c('Early (300)','Mid (500)','Late (700)')
+predDat1 <- data.frame(cDist=0,isNonCrop=beetDatAb2$isNonCrop[1], #Noncrop
+                      GDD=useGDD,lon_dup=0,lat_dup=0,
+                      BLID=beetDatAb2$BLID[1]) %>% 
+  bind_cols(.,predict(gamN,newdata=.,se.fit=TRUE,exclude=dontUse)) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(across(c(fit,upr,lwr),~exp(.x)/2)) %>% 
+  mutate(cDist=-5) %>% mutate(GDD=factor(GDD,labels=gddLabs))
+
+predDat2 <- data.frame(cDist=0:200,isNonCrop=beetDatAb2$isNonCrop[105], #Crop
+                       GDD=useGDD,lon_dup=0,lat_dup=0,
+                       BLID=beetDatAb2$BLID[1]) %>% 
+  bind_cols(.,predict(gamN,newdata=.,se.fit=TRUE,exclude=dontUse)) %>% 
+  mutate(upr=fit+se.fit*1.96,lwr=fit-se.fit*1.96) %>% 
+  mutate(across(c(fit,upr,lwr),~exp(.x)/2)) %>% 
+  mutate(GDD=factor(GDD,labels=gddLabs))
+
+ggplot(data=predDat2,aes(x=cDist,y=fit))+
+  geom_ribbon(aes(ymax=upr,ymin=lwr),alpha=0.2)+
+  geom_line(size=1)+
+  geom_pointrange(data=predDat1,aes(ymax=upr,ymin=lwr),size=1)+
+  facet_wrap(~GDD,ncol=3)+
+  labs(x='Distance',y='Beetles caught per week')
+
+save(list = c('beetDatAb','gamN'),file = './beetleData_SR.Rdata')
+
